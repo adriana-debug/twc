@@ -1,23 +1,34 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Agent Performance Dashboard</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://unpkg.com/feather-icons"></script>
+  <style>
+    .kpi-card { transition: all 0.2s ease; }
+    .kpi-card:hover { transform: translateY(-3px); box-shadow: 0 8px 16px rgba(0,0,0,0.15); }
+
+    body.dark { background-color: #111827; color: #e5e7eb; }
+    body.dark .bg-white { background-color: #1f2937 !important; }
+    body.dark .text-gray-900 { color: #f9fafb !important; }
+    body.dark .text-gray-500 { color: #d1d5db !important; }
+    body.dark .border-gray-200 { border-color: #374151 !important; }
+    body.dark table thead { background-color: #1f2937; }
+    body.dark table td, body.dark table th { color: #e5e7eb !important; }
+  </style>
 </head>
 <body class="bg-gray-50">
-  <div class="min-h-screen px-6 py-4 max-w-7xl mx-auto">
-    <!-- Header -->
+  <div class="min-h-screen px-6 py-6 max-w-7xl mx-auto">
     <header class="flex justify-between items-center mb-6">
-      <div class="flex items-center space-x-2">
-        <i data-feather="activity" class="text-indigo-500"></i>
+      <div class="flex items-center gap-3">
+        <i data-feather="activity" class="text-indigo-600"></i>
         <h1 class="text-2xl font-bold">Agent Performance Dashboard</h1>
       </div>
-      <button id="themeToggle" class="px-3 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 flex items-center">
-        <i data-feather="moon" class="mr-2 w-4 h-4"></i> Dark Mode
+      <button id="themeToggle" class="px-3 py-2 bg-indigo-600 text-white rounded-md flex items-center gap-2">
+        <i data-feather="moon" class="w-4 h-4"></i> Dark
       </button>
     </header>
 
@@ -26,23 +37,25 @@
 
     <!-- Main Grid -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <!-- Agent Leaderboard -->
+      <!-- Leaderboard -->
       <div class="bg-white rounded-lg shadow p-6">
         <h2 class="text-lg font-bold mb-4">Agent Leaderboard</h2>
-        <table class="min-w-full divide-y divide-gray-200">
-          <thead>
-            <tr>
-              <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Agent</th>
-              <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Interactions</th>
-              <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">CSAT</th>
-              <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">SLA</th>
-            </tr>
-          </thead>
-          <tbody id="leaderboardBody" class="divide-y divide-gray-200"></tbody>
-        </table>
+        <div class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead>
+              <tr>
+                <th class="px-4 py-2 text-left text-xs font-medium uppercase">Agent</th>
+                <th class="px-4 py-2 text-left text-xs font-medium uppercase">Interactions</th>
+                <th class="px-4 py-2 text-left text-xs font-medium uppercase">CSAT</th>
+                <th class="px-4 py-2 text-left text-xs font-medium uppercase">SLA</th>
+              </tr>
+            </thead>
+            <tbody id="leaderboardBody" class="divide-y divide-gray-200"></tbody>
+          </table>
+        </div>
       </div>
 
-      <!-- Performance Trends -->
+      <!-- Trends -->
       <div class="bg-white rounded-lg shadow p-6">
         <h2 class="text-lg font-bold mb-4">Performance Trends</h2>
         <canvas id="trendChart" height="200"></canvas>
@@ -50,63 +63,65 @@
     </div>
   </div>
 
+  <template id="kpi-template">
+    <div class="kpi-card bg-white rounded-lg p-5">
+      <p class="kpi-metric text-sm font-medium text-gray-500"></p>
+      <p class="kpi-value mt-2 text-3xl font-bold text-gray-900"></p>
+      <p class="kpi-sub text-xs text-gray-400 mt-1"></p>
+    </div>
+  </template>
+
   <script>
     feather.replace();
     document.getElementById('themeToggle').addEventListener('click', () => {
       document.body.classList.toggle('dark');
     });
 
-    const sheetId = '1gVUCy-MLr74lViwU5tJimXVx6MhCnMRmqwJuLAcVNWA';
-    const apiKey = '7265373df99485d0bac13d73e24d8d173a73bea1';
+    const API_URL = "https://script.google.com/macros/s/AKfycbxR17AMZXDQeBE88_BXT5q596q-0xt5AHHkaunrDX26Eopy6_XW7ybAAFct0exdmJ_RUg/exec"; // Replace with your new deployment URL
 
-    async function fetchSheetData(sheetName, range) {
-      const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${sheetName}!${range}?key=${apiKey}`;
-      const res = await fetch(url);
-      const data = await res.json();
-      return data.values || [];
+    fetch(API_URL).then(r => r.json()).then(data => {
+      renderKPIs(data.kpis);
+      renderLeaderboard(data.leaderboard);
+      renderTrends(data.trends);
+    });
+
+    function renderKPIs(kpis) {
+      const row = document.getElementById("kpiRow");
+      const tpl = document.getElementById("kpi-template");
+      row.innerHTML = "";
+      kpis.forEach(kpi => {
+        const clone = tpl.content.cloneNode(true);
+        clone.querySelector(".kpi-metric").textContent = kpi.Metric;
+        clone.querySelector(".kpi-value").textContent = kpi.Value;
+        clone.querySelector(".kpi-sub").textContent = kpi.Subtext || "";
+        row.appendChild(clone);
+      });
     }
 
-    async function loadDashboard() {
-      // Load KPI
-      const kpiData = await fetchSheetData('KPI', 'A2:B6');
-      const kpiRow = document.getElementById('kpiRow');
-      kpiData.forEach(([label, value]) => {
-        const card = document.createElement('div');
-        card.className = 'kpi-card bg-white rounded-lg p-5';
-        card.innerHTML = `
-          <p class="text-sm font-medium text-gray-500">${label}</p>
-          <p class="mt-2 text-3xl font-bold text-gray-900">${value}</p>
+    function renderLeaderboard(agents) {
+      const tbody = document.getElementById("leaderboardBody");
+      tbody.innerHTML = "";
+      agents.forEach(agent => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td class="px-4 py-2">${agent.Agent}</td>
+          <td class="px-4 py-2">${agent.Interactions}</td>
+          <td class="px-4 py-2">${agent.CSAT}%</td>
+          <td class="px-4 py-2">${agent.SLA}%</td>
         `;
-        kpiRow.appendChild(card);
+        tbody.appendChild(tr);
       });
+    }
 
-      // Load Leaderboard
-      const leaderboardData = await fetchSheetData('Leaderboard', 'A2:D');
-      const leaderboardBody = document.getElementById('leaderboardBody');
-      leaderboardData.forEach(([name, interactions, csat, sla]) => {
-        const row = document.createElement('tr');
-        row.className = 'hover:bg-gray-50';
-        row.innerHTML = `
-          <td class="px-4 py-2">${name}</td>
-          <td class="px-4 py-2">${interactions}</td>
-          <td class="px-4 py-2">${csat}</td>
-          <td class="px-4 py-2">${sla}</td>
-        `;
-        leaderboardBody.appendChild(row);
-      });
-
-      // Load Trends
-      const trendData = await fetchSheetData('Trends', 'A2:B8');
-      const labels = trendData.map(row => row[0]);
-      const values = trendData.map(row => parseInt(row[1]));
-      const ctx = document.getElementById('trendChart').getContext('2d');
+    function renderTrends(trends) {
+      const ctx = document.getElementById("trendChart").getContext("2d");
       new Chart(ctx, {
-        type: 'line',
+        type: "line",
         data: {
-          labels,
+          labels: trends.map(t => t.Day),
           datasets: [{
             label: "Interactions",
-            data: values,
+            data: trends.map(t => t.Interactions),
             borderColor: "#6366f1",
             backgroundColor: "rgba(99,102,241,0.2)",
             fill: true,
@@ -122,8 +137,6 @@
         }
       });
     }
-
-    loadDashboard();
   </script>
 </body>
 </html>
