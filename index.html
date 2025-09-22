@@ -1,142 +1,718 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Agent Performance Dashboard</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://unpkg.com/feather-icons"></script>
-  <style>
-    .kpi-card { transition: all 0.2s ease; }
-    .kpi-card:hover { transform: translateY(-3px); box-shadow: 0 8px 16px rgba(0,0,0,0.15); }
 
-    body.dark { background-color: #111827; color: #e5e7eb; }
-    body.dark .bg-white { background-color: #1f2937 !important; }
-    body.dark .text-gray-900 { color: #f9fafb !important; }
-    body.dark .text-gray-500 { color: #d1d5db !important; }
-    body.dark .border-gray-200 { border-color: #374151 !important; }
-    body.dark table thead { background-color: #1f2937; }
-    body.dark table td, body.dark table th { color: #e5e7eb !important; }
+  <script>
+    // Check if user is authenticated
+    function checkAuth() {
+      const isAuth = localStorage.getItem('dashboardAuth') === 'true' || 
+                    sessionStorage.getItem('dashboardAuth') === 'true';
+      if (!isAuth) {
+        window.location.href = 'login.html';
+      }
+    }
+    checkAuth();
+  </script>
+
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Feather Icons -->
+  <script src="https://unpkg.com/feather-icons"></script>
+
+  <!-- Google Charts -->
+  <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+
+  <style>
+    :root {
+      --dm-primary: #04101d;
+      --dm-accent: #cce416;
+      --dm-muted: #6b7280;
+      --card-bg: #ffffff;
+      --page-bg: #f9fafb;
+      --text: #0f172a;
+    }
+    body.dark {
+      --card-bg: #111827;
+      --page-bg: #0b1220;
+      --text: #e6eef7;
+      --dm-muted: #9ca3af;
+    }
+
+    body {
+      background: var(--page-bg);
+      color: var(--text);
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid rgba(0,0,0,0.04);
+    }
+
+    body.dark .card {
+      border-color: rgba(255,255,255,0.04);
+    }
+
+    /* small spinner */
+    .spinner {
+      border: 3px solid rgba(0,0,0,0.08);
+      border-top: 3px solid var(--dm-accent);
+      border-radius: 9999px;
+      width: 1.25rem;
+      height: 1.25rem;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* table tweaks */
+    .modern-table th { background: transparent; font-weight:700; color:var(--dm-muted); }
+    .modern-table td { color: var(--dm-muted); }
+
+    /* simple responsive fix */
+    .select-sm { min-width: 12rem; }
+    /* accent hover for buttons with smooth fade */
+    .button-hover-accent {
+      transition: background-color 200ms ease, color 200ms ease;
+    }
+    .button-hover-accent:hover {
+      background: #cce416 !important;
+      color: #4b5563 !important; /* gray-600 */
+    }
+    /* limit table container height and allow scrolling */
+    .table-scroll-400 { max-height: 400px; overflow:auto; }
+
+    /* Modal spinner overlay */
+    .modal-spinner-overlay {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0,0,0,0.35);
+      z-index: 60;
+    }
+    .modal-spinner-overlay.hidden { display: none; }
+    /* larger spinner variant for modal */
+    .spinner.modal { width: 3rem; height: 3rem; border-width: 4px; border-top-width: 4px; }
+  /* modern table visuals */
+  .modern-table { width:100%; border-collapse: separate; border-spacing: 0 0.5rem; }
+  .modern-table thead th { background: transparent; font-weight:700; color:var(--dm-muted); }
+  .modern-table tbody tr { background: var(--card-bg); box-shadow: 0 1px 4px rgba(2,6,23,0.04); transition: transform 0.12s ease, box-shadow 0.12s ease; }
+  .modern-table tbody tr:hover { transform: translateY(-3px); box-shadow: 0 6px 18px rgba(2,6,23,0.06); }
+  .modern-table td, .modern-table th { padding: 0.6rem 0.75rem; }
+  </style>
+  <style>
+    /* KPI indicator (inline, beside the metric) */
+    .kpi-indicator { display:inline-flex; align-items:center; justify-content:center; width:1rem; height:1rem; margin-left:0.5rem; vertical-align:middle; }
+    .kpi-pass { color: #0ba106; } /* green */
+    .kpi-fail { color: #db1818; } /* red */
+    .kpi-number-pass { color: #0ba106 !important; } /* darker green for number */
+    .kpi-number-fail { color: #db1818 !important; } /* darker red for number */
   </style>
 </head>
-<body class="bg-gray-50">
-  <div class="min-h-screen px-6 py-6 max-w-7xl mx-auto">
-    <header class="flex justify-between items-center mb-6">
-      <div class="flex items-center gap-3">
-        <i data-feather="activity" class="text-indigo-600"></i>
-        <h1 class="text-2xl font-bold">Agent Performance Dashboard</h1>
+<body class="min-h-screen antialiased">
+  <div class="max-w-7xl mx-auto px-6 py-6">
+
+    <!-- Top Banner -->
+    <div class="banner-gradient rounded-lg p-6 mb-6 flex items-center justify-between" style="background: linear-gradient(90deg,var(--dm-primary), var(--dm-accent)); color:white;">
+      <div class="flex items-center gap-4">
+        <div class="w-12 h-12 bg-white rounded-md overflow-hidden rotate-45 flex items-center justify-center">
+          <!-- placeholder logo, replace src if needed -->
+          <img src="dmi_logo.jpg" alt="logo" class="w-full h-full object-cover rotate-[315deg]"/>
+        </div>
+        <div>
+          <h1 class="text-2xl font-bold">Welcome to Your Dashboard</h1>
+          <p class="text-sm opacity-90">Track your team's performance in real time</p>
+        </div>
       </div>
-      <button id="themeToggle" class="px-3 py-2 bg-indigo-600 text-white rounded-md flex items-center gap-2">
-        <i data-feather="moon" class="w-4 h-4"></i> Dark
-      </button>
-    </header>
 
-    <!-- KPI Row -->
-    <div id="kpiRow" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8"></div>
+      <div class="flex items-center gap-3">
+        <button id="refreshBtn" class="px-3 py-2 rounded-md bg-white text-sm font-medium text-gray-800 hover:brightness-95 flex items-center gap-2">
+          <i data-feather="refresh-cw"></i> Refresh
+        </button>
+        <button id="resetBtn" class="px-3 py-2 rounded-md bg-white text-sm font-medium text-gray-800 hover:brightness-95 flex items-center gap-2 button-hover-accent" title="Reset Filters">
+          <i data-feather="x-circle"></i> Reset
+        </button>
+        <button id="themeToggle" class="px-3 py-2 rounded-md bg-white text-sm font-medium text-gray-800 hover:brightness-95 flex items-center gap-2">
+          <i data-feather="moon"></i> Theme
+        </button>
+      </div>
+    </div>
 
-    <!-- Main Grid -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <!-- Leaderboard -->
-      <div class="bg-white rounded-lg shadow p-6">
-        <h2 class="text-lg font-bold mb-4">Agent Leaderboard</h2>
-        <div class="overflow-x-auto">
-          <table class="min-w-full divide-y divide-gray-200">
+    <!-- Filters -->
+    <div class="flex flex-wrap gap-4 items-center mb-6">
+      <div class="flex items-center gap-2">
+        <label class="text-sm mr-2">Team</label>
+        <select id="teamSelect" class="select-sm px-3 py-2 rounded-md card"></select>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <label class="text-sm mr-2">Agent</label>
+        <select id="agentSelect" class="select-sm px-3 py-2 rounded-md card"></select>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <label class="text-sm mr-2">Month</label>
+        <select id="monthSelect" class="select-sm px-3 py-2 rounded-md card"></select>
+      </div>
+
+      <!-- inline spinner removed; modal spinner overlay used instead -->
+    </div>
+
+    <!-- KPI Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+      <div class="card rounded-lg p-6 shadow-sm">
+        <h3 class="font-semibold mb-2 flex items-center gap-2"><i data-feather="mail"></i> Email</h3>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <div class="text-sm text-gray-500">Total</div>
+            <div class="text-2xl font-bold" id="emailTotal">--</div>
+          </div>
+          <div>
+            <div class="text-sm text-gray-500">CSAT</div>
+            <div class="text-2xl font-bold" id="emailCsat">--</div>
+          </div>
+          <div>
+            <div class="text-sm text-gray-500">First Response</div>
+            <div class="text-lg font-medium" id="emailFrt">--</div>
+          </div>
+          <div>
+            <div class="text-sm text-gray-500">SLA</div>
+            <div class="text-lg font-medium" id="emailSla">--</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card rounded-lg p-6 shadow-sm">
+        <h3 class="font-semibold mb-2 flex items-center gap-2"><i data-feather="message-circle"></i> Chat</h3>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <div class="text-sm text-gray-500">Total</div>
+            <div class="text-2xl font-bold" id="chatTotal">--</div>
+          </div>
+          <div>
+            <div class="text-sm text-gray-500">CSAT</div>
+            <div class="text-2xl font-bold" id="chatCsat">--</div>
+          </div>
+          <div>
+            <div class="text-sm text-gray-500">First Response</div>
+            <div class="text-lg font-medium" id="chatFrt">--</div>
+          </div>
+          <div>
+            <div class="text-sm text-gray-500">SLA</div>
+            <div class="text-lg font-medium" id="chatSla">--</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card rounded-lg p-6 shadow-sm">
+        <h3 class="font-semibold mb-2 flex items-center gap-2"><i data-feather="phone"></i> Calls</h3>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <div class="text-sm text-gray-500">Total</div>
+            <div class="text-2xl font-bold" id="callTotal">--</div>
+          </div>
+          <div>
+            <div class="text-sm text-gray-500">Abandon</div>
+            <div class="text-2xl font-bold" id="callAbandon">--</div>
+          </div>
+          <div>
+            <div class="text-sm text-gray-500">Transfers</div>
+            <div class="text-lg font-medium" id="callTransfers">--</div>
+          </div>
+          <div>
+            <div class="text-sm text-gray-500">SLA</div>
+            <div class="text-lg font-medium" id="callSla">--</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Leaderboard + Trend (Google Chart) -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+      <div class="card rounded-lg p-6 shadow-sm">
+        <h3 class="font-semibold mb-4">Top Agents</h3>
+        <div class="overflow-auto table-scroll-400">
+          <table class="modern-table w-full">
             <thead>
               <tr>
-                <th class="px-4 py-2 text-left text-xs font-medium uppercase">Agent</th>
-                <th class="px-4 py-2 text-left text-xs font-medium uppercase">Interactions</th>
-                <th class="px-4 py-2 text-left text-xs font-medium uppercase">CSAT</th>
-                <th class="px-4 py-2 text-left text-xs font-medium uppercase">SLA</th>
+                <th class="text-left px-3 py-2">Agent</th>
+                <th class="text-left px-3 py-2">Interactions</th>
+                <th class="text-left px-3 py-2">CSAT</th>
+                <th class="text-left px-3 py-2">SLA</th>
               </tr>
             </thead>
-            <tbody id="leaderboardBody" class="divide-y divide-gray-200"></tbody>
+            <tbody id="leaderboardBody">
+              <!-- rows injected -->
+            </tbody>
           </table>
         </div>
       </div>
 
-      <!-- Trends -->
-      <div class="bg-white rounded-lg shadow p-6">
-        <h2 class="text-lg font-bold mb-4">Performance Trends</h2>
-        <canvas id="trendChart" height="200"></canvas>
+      <div class="card rounded-lg p-6 shadow-sm">
+        <h3 class="font-semibold mb-4">Interactions Trend</h3>
+        <div id="trendChart" style="width:100%;height:320px;"></div>
       </div>
     </div>
+
+<!-- Daily Trend Table -->
+<div class="card rounded-lg p-4 mb-4" style="display: flex; flex-direction: column;">
+  <h3 class="font-semibold mb-3" style="margin-left: 0;">Daily Interactions - Stacked Volume</h3>
+  <div id="dailyComboChart" style="width: 100%; height: 320px;"></div>
+</div>
+
+
+    <div class="card rounded-lg p-6 shadow-sm">
+  <h3 class="font-semibold mb-4">Daily Trend - Overall</h3>
+      <div class="overflow-auto table-scroll-400">
+        <table id="dailyTrendTable" class="modern-table w-full text-sm text-left text-gray-500 dark:text-gray-400">
+    <thead class="text-xs uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+      <tr>
+        <th class="px-6 py-3">Date</th>
+        <th class="px-6 py-3">Total</th>
+        <th class="px-6 py-3">Email</th>
+        <th class="px-6 py-3">Chat</th>
+        <th class="px-6 py-3">Calls</th>
+        <th class="px-6 py-3">CSAT</th>
+        <th class="px-6 py-3">FRT</th>
+        <th class="px-6 py-3">Res</th>
+        <th class="px-6 py-3">Abandon</th>
+        <th class="px-6 py-3">SLA</th>
+      </tr>
+    </thead>
+    <tbody id="dailyTrendBody">
+      <!-- Data rows inserted dynamically here -->
+    </tbody>
+        </table>
+      </div>
+    </div>
+
+    </div>
+
   </div>
 
-  <template id="kpi-template">
-    <div class="kpi-card bg-white rounded-lg p-5">
-      <p class="kpi-metric text-sm font-medium text-gray-500"></p>
-      <p class="kpi-value mt-2 text-3xl font-bold text-gray-900"></p>
-      <p class="kpi-sub text-xs text-gray-400 mt-1"></p>
-    </div>
-  </template>
-
+  <!-- JavaScript -->
   <script>
+    // -------------------------------------------------
+    // CONFIG
+    // -------------------------------------------------
+    // Set this to your deployed Apps Script web app URL
+    // Example: https://script.google.com/macros/s/AKfycbx.../exec
+    const APPSCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyRPK0cloKjkH9ZLa2fJCyVTnyCCmwaAsaQfBf16lZmLFFIII9u9Hjj1qFrZJPCB5gL/exec';
+
+    // refresh interval (ms)
+    const REFRESH_INTERVAL = 300000; // 5 minutes
+
+    // -------------------------------------------------
+    // Initialization & utilities
+    // -------------------------------------------------
     feather.replace();
-    document.getElementById('themeToggle').addEventListener('click', () => {
-      document.body.classList.toggle('dark');
-    });
 
-    const API_URL = "https://script.google.com/macros/s/AKfycbxR17AMZXDQeBE88_BXT5q596q-0xt5AHHkaunrDX26Eopy6_XW7ybAAFct0exdmJ_RUg/exec"; // Replace with your new deployment URL
+    google.charts.load('current', { packages: ['corechart', 'table'] });
+    // chart draw will be called after data fetch
 
-    fetch(API_URL).then(r => r.json()).then(data => {
-      renderKPIs(data.kpis);
-      renderLeaderboard(data.leaderboard);
-      renderTrends(data.trends);
-    });
+    const qs = {
+      teamSelect: document.getElementById('teamSelect'),
+      agentSelect: document.getElementById('agentSelect'),
+      monthSelect: document.getElementById('monthSelect'),
+  // inline spinner removed; modal spinner overlay will be used
+      refreshBtn: document.getElementById('refreshBtn'),
+      themeToggle: document.getElementById('themeToggle'),
+      leaderboardBody: document.getElementById('leaderboardBody'),
+      dailyTrendBody: document.getElementById('dailyTrendBody'),
+      // KPI fields
+      emailTotal: document.getElementById('emailTotal'),
+      emailCsat: document.getElementById('emailCsat'),
+      emailFrt: document.getElementById('emailFrt'),
+      emailSla: document.getElementById('emailSla'),
+      chatTotal: document.getElementById('chatTotal'),
+      chatCsat: document.getElementById('chatCsat'),
+      chatFrt: document.getElementById('chatFrt'),
+      chatSla: document.getElementById('chatSla'),
+      callTotal: document.getElementById('callTotal'),
+      callAbandon: document.getElementById('callAbandon'),
+      callTransfers: document.getElementById('callTransfers'),
+      callSla: document.getElementById('callSla')
+    };
 
-    function renderKPIs(kpis) {
-      const row = document.getElementById("kpiRow");
-      const tpl = document.getElementById("kpi-template");
-      row.innerHTML = "";
-      kpis.forEach(kpi => {
-        const clone = tpl.content.cloneNode(true);
-        clone.querySelector(".kpi-metric").textContent = kpi.Metric;
-        clone.querySelector(".kpi-value").textContent = kpi.Value;
-        clone.querySelector(".kpi-sub").textContent = kpi.Subtext || "";
-        row.appendChild(clone);
-      });
+    function showSpinner() {
+      const modal = document.getElementById('modalSpinner'); if (modal) modal.classList.remove('hidden');
+    }
+    function hideSpinner() {
+      const modal = document.getElementById('modalSpinner'); if (modal) modal.classList.add('hidden');
     }
 
-    function renderLeaderboard(agents) {
-      const tbody = document.getElementById("leaderboardBody");
-      tbody.innerHTML = "";
-      agents.forEach(agent => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td class="px-4 py-2">${agent.Agent}</td>
-          <td class="px-4 py-2">${agent.Interactions}</td>
-          <td class="px-4 py-2">${agent.CSAT}%</td>
-          <td class="px-4 py-2">${agent.SLA}%</td>
-        `;
-        tbody.appendChild(tr);
-      });
+    // safe fetch wrapper
+    async function safeFetch(url) {
+      const res = await fetch(url, { mode: 'cors' });
+      if (!res.ok) throw new Error('Network response was not ok');
+      return res.json();
     }
 
-    function renderTrends(trends) {
-      const ctx = document.getElementById("trendChart").getContext("2d");
-      new Chart(ctx, {
-        type: "line",
-        data: {
-          labels: trends.map(t => t.Day),
-          datasets: [{
-            label: "Interactions",
-            data: trends.map(t => t.Interactions),
-            borderColor: "#6366f1",
-            backgroundColor: "rgba(99,102,241,0.2)",
-            fill: true,
-            tension: 0.4
-          }]
-        },
-        options: {
-          plugins: { legend: { display: false } },
-          scales: {
-            x: { grid: { color: "rgba(107,114,128,0.1)" } },
-            y: { grid: { color: "rgba(107,114,128,0.1)" } }
-          }
+    // -------------------------------------------------
+    // Theme handling
+    // -------------------------------------------------
+    (function initTheme() {
+      const saved = localStorage.getItem('dm-theme');
+      if (saved === 'dark') document.body.classList.add('dark');
+      updateThemeIcon();
+    })();
+
+    function toggleTheme() {
+      const isDark = document.body.classList.toggle('dark');
+      localStorage.setItem('dm-theme', isDark ? 'dark' : 'light');
+      updateThemeIcon();
+      // redraw charts to adapt colors
+      drawTrendChart(lastTrendData);
+    }
+
+    function updateThemeIcon() {
+      const icon = document.querySelector('#themeToggle i');
+      if (!icon) return;
+      icon.setAttribute('data-feather', document.body.classList.contains('dark') ? 'sun' : 'moon');
+      feather.replace();
+    }
+
+    document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+
+    // -------------------------------------------------
+    // Dropdowns (select elements)
+    // -------------------------------------------------
+    async function loadDropdowns() {
+      // default local placeholders
+      const defaultData = {
+        teams: ['All Teams'],
+        agents: ['All Agents'],
+        months: ['All Months']
+      };
+
+  showSpinner();
+      let data = defaultData;
+      if (APPSCRIPT_URL) {
+        try {
+          const url = `${APPSCRIPT_URL}?action=dropdowns`;
+          data = await safeFetch(url);
+        } catch (err) {
+          console.warn('loadDropdowns failed', err);
         }
+      }
+
+      populateSelect(qs.teamSelect, data.teams || ['All Teams']);
+      populateSelect(qs.agentSelect, data.agents || ['All Agents']);
+      populateSelect(qs.monthSelect, data.months || ['All Months']);
+
+      hideSpinner();
+    }
+
+    function populateSelect(selectEl, items) {
+      if (!selectEl) return;
+      selectEl.innerHTML = '';
+      // ensure "All ..." first
+      items.forEach(it => {
+        const opt = document.createElement('option');
+        opt.value = it;
+        opt.textContent = it;
+        selectEl.appendChild(opt);
       });
     }
+
+      // reset filters to defaults and refresh
+      function resetFilters() {
+        if (qs.teamSelect) qs.teamSelect.value = qs.teamSelect.querySelector('option')?.value || 'All Teams';
+        if (qs.agentSelect) qs.agentSelect.value = qs.agentSelect.querySelector('option')?.value || 'All Agents';
+        if (qs.monthSelect) qs.monthSelect.value = qs.monthSelect.querySelector('option')?.value || 'All Months';
+        // refresh dashboard
+        updateAll();
+      }
+
+    // -------------------------------------------------
+    // Main data loading and rendering
+    // -------------------------------------------------
+    function getFilters() {
+      return {
+        team: qs.teamSelect?.value || 'All Teams',
+        agent: qs.agentSelect?.value || 'All Agents',
+        month: qs.monthSelect?.value || 'All Months'
+      };
+    }
+
+    async function updateAll() {
+      // load dashboard data and trend table and redraw charts
+      const filters = getFilters();
+      await Promise.all([ updateDashboard(filters), updateTrendTable(filters) ]);
+    }
+
+    async function updateDashboard(filters = getFilters()) {
+      showSpinner();
+      if (!APPSCRIPT_URL) {
+        console.warn('APPSCRIPT_URL not configured');
+        hideSpinner();
+        return;
+      }
+
+      try {
+        const url = `${APPSCRIPT_URL}?team=${encodeURIComponent(filters.team)}&agent=${encodeURIComponent(filters.agent)}&month=${encodeURIComponent(filters.month)}`;
+        const data = await safeFetch(url);
+
+        // KPIs
+        qs.emailTotal.textContent = data.email?.total ?? '--';
+        qs.emailCsat.textContent = data.email?.csat ?? '--';
+        qs.emailFrt.textContent = data.email?.frt ?? '--';
+        qs.emailSla.textContent = (data.email?.sla !== undefined) ? `${data.email.sla}%` : '--';
+
+        // KPI indicators: use targets returned by server (data.targets)
+        function applyKpiIndicator(el, metricKey, kpiTargetObj) {
+          if (!el || !kpiTargetObj) return;
+          // remove existing indicator
+          const next = el.nextElementSibling; if (next && next.classList && next.classList.contains('kpi-indicator')) next.remove();
+          const span = document.createElement('span');
+          span.className = 'kpi-indicator';
+          const up = kpiTargetObj.up; // true means meeting or exceeding
+          if (up) { span.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" class="kpi-pass"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg>'; el.classList.remove('kpi-number-fail'); el.classList.add('kpi-number-pass'); }
+          else { span.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" class="kpi-fail"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>'; el.classList.remove('kpi-number-pass'); el.classList.add('kpi-number-fail'); }
+          el.insertAdjacentElement('afterend', span);
+        }
+
+        // Apply indicators for email targets
+        try {
+          const t = data.targets || {};
+          if (t.email) {
+            applyKpiIndicator(document.getElementById('emailCsat'), 'email.csat', t.email.csat);
+            applyKpiIndicator(document.getElementById('emailFrt'), 'email.frt', t.email.frt);
+            applyKpiIndicator(document.getElementById('emailSla'), 'email.sla', t.email.sla);
+          }
+          if (t.chat) {
+            applyKpiIndicator(document.getElementById('chatCsat'), 'chat.csat', t.chat.csat);
+            applyKpiIndicator(document.getElementById('chatFrt'), 'chat.frt', t.chat.frt);
+            applyKpiIndicator(document.getElementById('chatSla'), 'chat.sla', t.chat.sla);
+          }
+          if (t.call) {
+            applyKpiIndicator(document.getElementById('callAbandon'), 'call.abandon', t.call.abandon);
+            applyKpiIndicator(document.getElementById('callSla'), 'call.sla', t.call.sla);
+          }
+        } catch(e) { console.warn('applyKpiIndicator error', e); }
+
+        qs.chatTotal.textContent = data.chat?.total ?? '--';
+        qs.chatCsat.textContent = data.chat?.csat ?? '--';
+        qs.chatFrt.textContent = data.chat?.frt ?? '--';
+        qs.chatSla.textContent = (data.chat?.sla !== undefined) ? `${data.chat.sla}%` : '--';
+
+        qs.callTotal.textContent = data.call?.total ?? '--';
+        qs.callAbandon.textContent = (data.call?.abandon !== undefined) ? `${data.call.abandon}%` : '--';
+        qs.callTransfers.textContent = data.call?.transfers ?? '--';
+        qs.callSla.textContent = (data.call?.sla !== undefined) ? `${data.call.sla}%` : '--';
+
+        // Leaderboard
+        renderLeaderboard(data.leaderboard || []);
+        // Trend chart
+        drawTrendChart(data.trend || { labels: [], values: [] });
+      } catch (err) {
+        console.warn('updateDashboard error', err);
+      } finally {
+        hideSpinner();
+      }
+    }
+
+    function renderLeaderboard(rows) {
+      qs.leaderboardBody.innerHTML = '';
+      if (!rows || rows.length === 0) {
+        qs.leaderboardBody.innerHTML = `<tr><td class="px-3 py-2" colspan="4">No data</td></tr>`;
+        return;
+      }
+      // sort by interactions descending
+      rows.sort((a,b)=> (b.interactions||0) - (a.interactions||0));
+      rows.forEach(r => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="px-3 py-2">${escapeHtml(r.name || '')}</td>
+          <td class="px-3 py-2">${r.interactions ?? 0}</td>
+          <td class="px-3 py-2">${(r.csat ?? '--')}</td>
+          <td class="px-3 py-2">${(r.sla ?? '--')}%</td>
+        `;
+        qs.leaderboardBody.appendChild(tr);
+      });
+    }
+
+    // -------------------------------------------------
+    // Trend table (detailed daily rows)
+    // -------------------------------------------------
+    async function updateTrendTable(filters = getFilters()) {
+      showSpinner();
+      if (!APPSCRIPT_URL) { hideSpinner(); return; }
+      try {
+        const url = `${APPSCRIPT_URL}?action=trendTable&team=${encodeURIComponent(filters.team)}&agent=${encodeURIComponent(filters.agent)}&month=${encodeURIComponent(filters.month)}`;
+        const rows = await safeFetch(url);
+        renderDailyTrend(rows || []);
+      } catch (err) {
+        console.warn('updateTrendTable failed', err);
+      } finally {
+        hideSpinner();
+      }
+    }
+
+    function renderDailyTrend(rows) {
+      qs.dailyTrendBody.innerHTML = '';
+      if (!rows || rows.length === 0) {
+        qs.dailyTrendBody.innerHTML = `<tr><td class="px-3 py-2" colspan="10">No data</td></tr>`;
+        return;
+      }
+      rows.forEach(r => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="px-3 py-2">${escapeHtml(r.date)}</td>
+          <td class="px-3 py-2">${r.total ?? '--'}</td>
+          <td class="px-3 py-2">${r.email ?? '--'}</td>
+          <td class="px-3 py-2">${r.chat ?? '--'}</td>
+          <td class="px-3 py-2">${r.calls ?? '--'}</td>
+          <td class="px-3 py-2">${r.csat ?? '--'}</td>
+          <td class="px-3 py-2">${r.frt ?? '--'}</td>
+          <td class="px-3 py-2">${r.res ?? '--'}</td>
+          <td class="px-3 py-2">${r.abandon ?? '--'}</td>
+          <td class="px-3 py-2">${r.sla ?? '--'}</td>
+        `;
+        qs.dailyTrendBody.appendChild(tr);
+      });
+      // Also draw a stacked combo chart of interactions (Email/Chat/Calls)
+      try { drawDailyComboChart(rows); } catch(e) { console.warn('drawDailyComboChart failed', e); }
+    }
+
+    function drawDailyComboChart(rows) {
+      if (!google.visualization) { google.charts.setOnLoadCallback(() => drawDailyComboChart(rows)); return; }
+      const dataArray = [['Date', 'Email', 'Chat', 'Calls', 'Total']];
+      rows.forEach(r => {
+        const date = r.date || '';
+        const email = Number(r.email) || 0;
+        const chat = Number(r.chat) || 0;
+        const calls = Number(r.calls) || 0;
+        const total = Number(r.total) || (email + chat + calls);
+        dataArray.push([date, email, chat, calls, total]);
+      });
+
+      const data = google.visualization.arrayToDataTable(dataArray);
+      const isDark = document.body.classList.contains('dark');
+      const options = {
+        isStacked: true,
+        seriesType: 'bars',
+        series: { 3: { type: 'line', color: isDark ? '#f0f3d3' : '#111827', lineWidth: 2, pointSize: 4 } },
+        colors: [ '#cbe123', '#66686e', '#7a880d' ],
+        backgroundColor: 'transparent',
+        legend: { position: 'top', textStyle: { color: isDark ? '#e6eef7' : '#0f172a' } },
+        chartArea: { left: 50, top: 20, width: '80%', height: '65%' },
+        hAxis: { textStyle: { color: isDark ? '#e6eef7' : '#0f172a' } },
+        vAxis: { textStyle: { color: isDark ? '#e6eef7' : '#0f172a' } }
+      };
+
+      const chart = new google.visualization.ComboChart(document.getElementById('dailyComboChart'));
+      chart.draw(data, options);
+    }
+
+    // -------------------------------------------------
+    // Google Chart: interactions trend (simple line)
+    // -------------------------------------------------
+    let lastTrendData = { labels: [], values: [] };
+    function drawTrendChart(trend = { labels: [], values: [] }) {
+      lastTrendData = trend;
+      if (!google.visualization) {
+        // if google charts not yet loaded, queue draw upon load
+        google.charts.setOnLoadCallback(() => drawTrendChart(trend));
+        return;
+      }
+
+      const labels = trend.labels || [];
+      const values = trend.values || [];
+
+      // build DataTable
+      const dataArray = [['Date', 'Interactions']];
+      for (let i = 0; i < labels.length; i++) {
+        const label = labels[i];
+        const val = typeof values[i] === 'number' ? values[i] : parseFloat(values[i]) || 0;
+        dataArray.push([label, val]);
+      }
+
+      const data = google.visualization.arrayToDataTable(dataArray);
+      const isDark = document.body.classList.contains('dark');
+      const options = {
+        legend: { position: 'none' },
+        backgroundColor: 'transparent',
+        colors: [ isDark ? '#cbe123' : '#6366f1' ],
+        hAxis: { textStyle: { color: isDark ? '#e6eef7' : '#0f172a' } },
+        vAxis: { textStyle: { color: isDark ? '#e6eef7' : '#0f172a' } },
+        chartArea: { left: 40, right: 20, top: 20, bottom: 60, width: '90%', height: '75%' },
+        curveType: 'function',
+        height: 320
+      };
+
+      const chart = new google.visualization.LineChart(document.getElementById('trendChart'));
+      chart.draw(data, options);
+    }
+
+    // -------------------------------------------------
+    // helpers
+    // -------------------------------------------------
+    function escapeHtml(s) {
+      if (s === undefined || s === null) return '';
+      return String(s)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+    }
+
+    // -------------------------------------------------
+    // Events wiring
+    // -------------------------------------------------
+    qs.refreshBtn.addEventListener('click', () => {
+      updateAll();
+    });
+
+    // Reset button wiring
+    const resetBtn = document.getElementById('resetBtn');
+    if (resetBtn) resetBtn.addEventListener('click', resetFilters);
+
+    // when selects change, refresh (cross-filtering)
+    [qs.teamSelect, qs.agentSelect, qs.monthSelect].forEach(el => {
+      el?.addEventListener('change', async () => {
+        // optionally when team changes, update agents list to show only relevant agents
+        // We rely on Apps Script to return all agents; for cascading filtering we'd need an endpoint
+        // to return agents filtered by team. For now we just reload full dashboard with filters.
+        await updateAll();
+      });
+    });
+
+    // auto-refresh interval
+    let refreshTimer = null;
+    function startAutoRefresh() {
+      if (refreshTimer) clearInterval(refreshTimer);
+      refreshTimer = setInterval(updateAll, REFRESH_INTERVAL);
+    }
+
+    // -------------------------------------------------
+    // Bootstrapping
+    // -------------------------------------------------
+    (async function boot() {
+      try {
+        showSpinner();
+        await loadDropdowns();
+        // initial selection defaults to "All ..." automatically from dropdown payload
+        await updateAll();
+        startAutoRefresh();
+      } catch (err) {
+        console.error('boot error', err);
+      } finally {
+        hideSpinner();
+      }
+    })();
   </script>
+  <!-- Modal spinner overlay (visible immediately because page will load data) -->
+  <div id="modalSpinner" class="modal-spinner-overlay" aria-hidden="false" role="dialog" aria-live="polite">
+    <div style="text-align:center;color:white;">
+      <div class="spinner modal" role="status" aria-label="Loading"></div>
+      <div style="margin-top:12px;font-size:1rem;">Loading...</div>
+    </div>
+  </div>
 </body>
 </html>
