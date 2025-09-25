@@ -98,27 +98,22 @@
     </div>
   </div>
 
-  <script>
+<script>
+  feather.replace();
 
+  // Dark mode toggle
+  const toggleBtn = document.getElementById('themeToggle');
+  toggleBtn.addEventListener('click', () => {
+    document.body.classList.toggle('dark');
+    toggleBtn.innerHTML = document.body.classList.contains('dark')
+      ? feather.icons.sun.toSvg()
+      : feather.icons.moon.toSvg();
+  });
 
-    
-    feather.replace();
+</script>
 
-    // Dark mode toggle
-    const toggleBtn = document.getElementById('themeToggle');
-    toggleBtn.addEventListener('click', () => {
-      document.body.classList.toggle('dark');
-      toggleBtn.innerHTML = document.body.classList.contains('dark')
-        ? feather.icons.sun.toSvg()
-        : feather.icons.moon.toSvg();
-    });
-
-    // Simple auth check
-    if (!localStorage.getItem('dashboardAuth') && !sessionStorage.getItem('dashboardAuth')) {
-      window.location.href = "login.html"; // redirect back if not logged in
-    }
-  </script>
 </body>
 </html>
+
 
 
