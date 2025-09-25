@@ -166,6 +166,17 @@
   </footer>
 
 <script>
+
+
+    // Redirect to login if not authenticated
+  if (
+    !localStorage.getItem("dashboardAuth") &&
+    !sessionStorage.getItem("dashboardAuth")
+  ) {
+    window.location.href = "login.html"; // always force back to login
+  }
+
+  
   feather.replace();
 
   const BASE_URL = "https://script.google.com/macros/s/AKfycbxYXjGPpeaC1zRpULAFs4bq10r-XV0R-scHknwyj0uYDalG3Km8h0p4VNO7btYUFkwEag/exec";
@@ -310,3 +321,4 @@
 
 </body>
 </html>
+
