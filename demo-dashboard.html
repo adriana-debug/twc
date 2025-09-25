@@ -296,6 +296,16 @@
 
   <!-- JavaScript -->
   <script>
+
+      // Redirect to login if not authenticated
+  if (
+    !localStorage.getItem("dashboardAuth") &&
+    !sessionStorage.getItem("dashboardAuth")
+  ) {
+    window.location.href = "login.html"; // always force back to login
+  }
+
+    
     // -------------------------------------------------
     // CONFIG
     // -------------------------------------------------
@@ -716,3 +726,4 @@
   </div>
 </body>
 </html>
+
