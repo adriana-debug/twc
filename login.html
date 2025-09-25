@@ -119,11 +119,6 @@
         </div>
       </div>
 
-      <div class="flex items-center mb-4">
-        <input id="remember" type="checkbox" class="mr-2" checked />
-        <label for="remember" class="text-sm text-gray-600">Remember me</label>
-      </div>
-
       <button type="submit"
         class="w-full btn-primary py-2 rounded-md transition">Login</button>
     </form>
@@ -147,13 +142,10 @@
       e.preventDefault();
       const u = document.getElementById('username').value;
       const p = document.getElementById('password').value;
-      const remember = document.getElementById('remember') && document.getElementById('remember').checked;
 
       // Default credentials: admin / password
       if (u === 'admin' && p === 'password') {
-        if (remember) localStorage.setItem('dashboardAuth', 'true');
-        else sessionStorage.setItem('dashboardAuth', 'true');
-        window.location.href = 'index.html';
+        window.location.href = 'index.html'; // Always redirect after login
       } else {
         alert('Invalid credentials. Use admin / password');
       }
