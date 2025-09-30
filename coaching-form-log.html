@@ -2,271 +2,449 @@
 <html lang="en">
 
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Digital Minds BPO - Coaching</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/feather-icons"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital Minds BPO - Coaching</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/feather-icons"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            brand: '#CBEB33',
-            brandlight: '#D9F25A',
-            blackpearl: '#04101d',
-            pear: '#e5e7eb',
-            waterloo: '#565f6f',
-            wasabi: '#2c370b',
-            primary: '#1f2937',
-            secondary: '#4b5563'
-          }
+    <script>
+        tailwind.config = {
+            darkMode: 'class', // ✅ Enable dark mode toggle by adding a class to <html> or <body>
+            theme: {
+                extend: {
+                    // Modernized and subtle color palette
+                    colors: {
+                        // Your brand accent color - a vibrant, but less harsh green
+                        'brand-accent': '#CBEB33', 
+                        // A slightly darker version for hover states
+                        'brand-dark': '#B5D12F', 
+                        // Base colors for dark mode background/text
+                        'bg-dark': '#0f172a', // slate-900 equivalent
+                        'text-dark': '#f1f5f9', // slate-100 equivalent
+                        // Base colors for light mode background/text
+                        'bg-light': '#f8fafc', // slate-50 equivalent
+                        'text-light': '#1e293b', // slate-800 equivalent
+                        // Card/Modal background in dark mode (a lighter shade of the main dark bg)
+                        'card-dark': '#1e293b', 
+                        // Border color for dark mode inputs/dividers
+                        'border-dark': '#334155',
+                        // Added colors for the delete button
+                        'danger': '#ef4444', // red-500
+                        'danger-dark': '#dc2626' // red-600
+                    }
+                }
+            }
+        };
+    </script>
+
+    <style>
+        /* Custom animation remains the same */
+        .animate-spin-slow {
+            animation: spin 2.5s linear infinite;
         }
-      }
-    };
-  </script>
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
 </head>
 
-<body class="min-h-screen bg-gray-100 text-slate-800 transition-colors duration-300">
+<body
+    class="min-h-screen bg-bg-light text-text-light dark:bg-bg-dark dark:text-text-dark transition-colors duration-500 font-sans">
 
-  <!-- Header -->
-  <header class="flex justify-between items-center p-6 bg-blackpearl dark:bg-primary shadow w-full fixed top-0 left-0 z-20 transition-colors duration-300">
-    <h1 class="text-3xl font-extrabold text-brandlight dark:text-brand">Employee Coaching</h1>
-    <div class="absolute top-6 right-6">
-      <button id="themeToggle" class="p-2 rounded-full text-pear hover:text-brand transition">
-        <i data-feather="moon"></i>
-      </button>
+    <header
+        class="flex justify-between items-center px-8 py-4 bg-white dark:bg-card-dark shadow-lg w-full fixed top-0 left-0 z-20 transition-all duration-500 border-b border-gray-100 dark:border-border-dark">
+        <h1 class="text-3xl font-extrabold text-text-light dark:text-text-dark transition-colors duration-500">
+            <span class="text-brand-accent">Digital</span> Coaching
+        </h1>
+        <button id="themeToggle"
+            class="p-2 rounded-full text-text-light dark:text-text-dark bg-gray-100 dark:bg-border-dark hover:bg-brand-accent hover:text-bg-dark transition-all duration-300 transform hover:scale-105"
+            aria-label="Toggle Dark Mode">
+        </button>
+    </header>
+
+    <div class="max-w-7xl mx-auto p-4 md:p-8 mt-24 space-y-8">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0">
+            <h2 class="text-3xl font-extrabold text-text-light dark:text-text-dark">Coaching Sessions</h2>
+            <button onclick="openModal()"
+                class="inline-flex items-center bg-brand-accent hover:bg-brand-dark text-bg-dark px-6 py-3 rounded-full shadow-lg font-bold transition duration-300 transform hover:scale-[1.03] text-lg">
+                <i class="fas fa-plus-circle mr-3"></i>New Session
+            </button>
+        </div>
+
+        <div
+            class="bg-white dark:bg-card-dark rounded-2xl shadow-2xl shadow-gray-200/50 dark:shadow-xl dark:shadow-black/50 overflow-hidden transition-colors duration-500 border border-gray-100 dark:border-border-dark">
+            <div class="overflow-x-auto">
+                <table class="min-w-full text-sm">
+                    <thead class="bg-gray-100 dark:bg-border-dark text-left">
+                        <tr>
+                            <th class="font-semibold text-gray-600 dark:text-text-dark uppercase tracking-wider px-6 py-4">Date</th>
+                            <th class="font-semibold text-gray-600 dark:text-text-dark uppercase tracking-wider px-6 py-4">Coach</th>
+                            <th class="font-semibold text-gray-600 dark:text-text-dark uppercase tracking-wider px-6 py-4">Employee</th>
+                            <th class="font-semibold text-gray-600 dark:text-text-dark uppercase tracking-wider px-6 py-4">Focus Area</th>
+                            <th class="font-semibold text-gray-600 dark:text-text-dark uppercase tracking-wider px-6 py-4">Acknowledge</th>
+                            <th class="font-semibold text-gray-600 dark:text-text-dark uppercase tracking-wider text-center px-6 py-4">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="sessionsTable" class="divide-y divide-gray-200 dark:divide-border-dark">
+                        <tr class="text-center">
+                            <td colspan="6" class="p-8 text-gray-500 dark:text-gray-400">
+                                Loading data...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
-  </header>
 
-  <!-- Container -->
-  <div class="max-w-7xl mx-auto p-8 pt-28 space-y-6">
-    <div class="flex justify-between items-center">
-      <h2 class="text-2xl font-bold text-primary dark:text-pear">Past Coaching Sessions</h2>
-      <button onclick="openModal()" class="inline-flex items-center bg-brand hover:bg-brandlight text-blackpearl px-6 py-3 rounded-full shadow-lg font-bold transition duration-150 transform hover:scale-[1.02]">
-        <i class="fas fa-plus-circle mr-2"></i>Add Coaching Session
-      </button>
+    <div id="modalBg" class="hidden fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex justify-center items-center z-50 transition-opacity duration-300">
+        <div
+            class="bg-white dark:bg-card-dark rounded-xl shadow-3xl w-full max-w-4xl p-8 relative transition-all duration-500 transform scale-95 opacity-0" id="modalContent">
+            <h3 id="modalTitle" class="text-3xl font-extrabold mb-6 text-brand-accent">Add Coaching Session</h3>
+            <button onclick="closeModal()" class="absolute top-4 right-4 p-2 rounded-full text-gray-400 hover:text-brand-accent transition">
+                <i class="fas fa-times fa-xl"></i>
+            </button>
+
+            <form id="coachingForm" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <input type="hidden" name="id" />
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Employee Name</label>
+                    <input type="text" name="employee"
+                        class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent dark:bg-bg-dark dark:border-border-dark dark:text-text-dark transition">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Coach Name</label>
+                    <input type="text" name="coach"
+                        class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent dark:bg-bg-dark dark:border-border-dark dark:text-text-dark transition">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Employee Number</label>
+                    <input type="text" name="employeenumber"
+                        class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent dark:bg-bg-dark dark:border-border-dark dark:text-text-dark transition">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Session Date</label>
+                    <input type="date" name="date"
+                        class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent dark:bg-bg-dark dark:border-border-dark dark:text-text-dark transition">
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Performance/Behavior Observed</label>
+                    <textarea name="performance" rows="3"
+                        class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent dark:bg-bg-dark dark:border-border-dark dark:text-text-dark transition"></textarea>
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Coaching Provided</label>
+                    <textarea name="coachingprovided" rows="3"
+                        class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent dark:bg-bg-dark dark:border-border-dark dark:text-text-dark transition"></textarea>
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Agreed Action Plan</label>
+                    <textarea name="actionplan" rows="3"
+                        class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent dark:bg-bg-dark dark:border-border-dark dark:text-text-dark transition"></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Acknowledge</label>
+                    <select name="acknowledge"
+                        class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent dark:bg-bg-dark dark:border-border-dark dark:text-text-dark transition">
+                        <option value="Pending" selected>Pending</option>
+                        <option value="Yes">Yes</option>
+                        <option value="No">No</option>
+                    </select>
+                </div>
+                <div class="md:col-span-2 flex justify-end space-x-4 pt-6 border-t border-gray-200 dark:border-border-dark">
+                    <button type="button" onclick="closeModal()"
+                        class="py-3 px-6 border border-gray-300 dark:border-border-dark rounded-full text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-bg-dark transition font-semibold">Cancel</button>
+                    <button type="submit"
+                        class="py-3 px-6 bg-brand-accent hover:bg-brand-dark text-bg-dark font-bold rounded-full shadow-md transition transform hover:scale-[1.02]">Save Session</button>
+                </div>
+            </form>
+        </div>
     </div>
 
-    <!-- Table Card -->
-    <div class="bg-white dark:bg-waterloo rounded-xl shadow-2xl p-6 relative transition-colors duration-300">
-      <div class="overflow-x-auto">
-        <table class="min-w-full text-sm">
-          <thead class="bg-blackpearl text-white dark:bg-wasabi">
-            <tr>
-              <th class="text-left px-4 py-3">Date</th>
-              <th class="text-left px-4 py-3">Coach</th>
-              <th class="text-left px-4 py-3">Employee</th>
-              <th class="text-left px-4 py-3">Focus Area</th>
-              <th class="text-left px-4 py-3">Acknowledge</th>
-              <th class="text-center px-4 py-3">Actions</th>
-            </tr>
-          </thead>
-          <tbody id="sessionsTable" class="divide-y divide-gray-100 dark:divide-gray-700">
-            <!-- Rows loaded dynamically -->
-          </tbody>
-        </table>
-      </div>
+    <div id="deleteConfirmModal" class="hidden fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex justify-center items-center z-50 transition-opacity duration-300">
+        <div id="deleteModalContent"
+            class="bg-white dark:bg-card-dark rounded-xl shadow-3xl w-full max-w-sm p-6 relative transition-all duration-500 transform scale-95 opacity-0 text-center">
+            
+            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 dark:bg-red-900/50">
+                <i class="fas fa-trash-alt text-danger fa-lg"></i>
+            </div>
+            
+            <h3 class="text-xl font-bold mt-3 text-text-light dark:text-text-dark">Confirm Deletion</h3>
+            <p id="deleteMessage" class="text-sm text-gray-500 dark:text-gray-400 mt-2">Are you absolutely sure you want to delete this session? This action cannot be undone.</p>
+            
+            <div class="mt-5 sm:mt-6 sm:flex sm:flex-row-reverse">
+                <button type="button" id="confirmDeleteButton"
+                    class="inline-flex w-full justify-center rounded-full border border-transparent bg-danger hover:bg-danger-dark px-4 py-2 text-base font-semibold text-white shadow-sm transition sm:ml-3 sm:w-auto sm:text-sm transform hover:scale-[1.02]">
+                    Delete
+                </button>
+                <button type="button" onclick="closeDeleteModal()"
+                    class="mt-3 inline-flex w-full justify-center rounded-full border border-gray-300 dark:border-border-dark bg-white dark:bg-card-dark px-4 py-2 text-base font-semibold text-gray-700 dark:text-gray-300 shadow-sm hover:bg-gray-50 dark:hover:bg-bg-dark transition sm:mt-0 sm:w-auto sm:text-sm">
+                    Cancel
+                </button>
+            </div>
+        </div>
     </div>
-  </div>
 
-  <!-- Modal -->
-  <div id="modalBg" class="hidden fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-    <div class="bg-white dark:bg-waterloo rounded-lg shadow-xl w-full max-w-3xl p-6 relative transition-colors duration-300">
-      <h3 id="modalTitle" class="text-2xl font-bold mb-4 text-primary dark:text-brand">Add Coaching Session</h3>
-      <button onclick="closeModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
-        <i class="fas fa-times fa-lg"></i>
-      </button>
-
-      <form id="coachingForm" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <input type="hidden" name="id" />
-
-        <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-pear">Employee Name</label>
-          <input type="text" name="employee" class="mt-1 block w-full p-2 border border-gray-300 rounded-md dark:bg-blackpearl dark:border-waterloo dark:text-pear">
+    <div id="loadingModal"
+        class="hidden fixed inset-0 bg-black bg-opacity-70 flex flex-col justify-center items-center z-50">
+        <div class="relative flex items-center justify-center">
+            <div class="w-16 h-16 border-4 border-gray-300 dark:border-border-dark border-t-brand-accent rounded-full animate-spin"></div>
+            <div class="absolute w-10 h-10 border-4 border-gray-200 dark:border-gray-700 border-b-brand-dark rounded-full animate-spin-slow"></div>
         </div>
-
-        <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-pear">Coach Name</label>
-          <input type="text" name="coach" class="mt-1 block w-full p-2 border border-gray-300 rounded-md dark:bg-blackpearl dark:border-waterloo dark:text-pear">
-        </div>
-
-        <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-pear">Employee Number</label>
-          <input type="text" name="employeenumber" class="mt-1 block w-full p-2 border border-gray-300 rounded-md dark:bg-blackpearl dark:border-waterloo dark:text-pear">
-        </div>
-
-        <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-pear">Session Date</label>
-          <input type="date" name="date" class="mt-1 block w-full p-2 border border-gray-300 rounded-md dark:bg-blackpearl dark:border-waterloo dark:text-pear">
-        </div>
-
-        <div class="md:col-span-2">
-          <label class="block text-sm font-medium text-gray-700 dark:text-pear">Performance/Behavior Observed</label>
-          <textarea name="performance" rows="3" class="mt-1 block w-full p-2 border border-gray-300 rounded-md dark:bg-blackpearl dark:border-waterloo dark:text-pear"></textarea>
-        </div>
-
-        <div class="md:col-span-2">
-          <label class="block text-sm font-medium text-gray-700 dark:text-pear">Coaching Provided</label>
-          <textarea name="coachingprovided" rows="3" class="mt-1 block w-full p-2 border border-gray-300 rounded-md dark:bg-blackpearl dark:border-waterloo dark:text-pear"></textarea>
-        </div>
-
-        <div class="md:col-span-2">
-          <label class="block text-sm font-medium text-gray-700 dark:text-pear">Agreed Action Plan</label>
-          <textarea name="actionplan" rows="3" class="mt-1 block w-full p-2 border border-gray-300 rounded-md dark:bg-blackpearl dark:border-waterloo dark:text-pear"></textarea>
-        </div>
-
-        <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-pear">Acknowledge</label>
-          <select name="acknowledge" class="mt-1 block w-full p-2 border border-gray-300 rounded-md dark:bg-blackpearl dark:border-waterloo dark:text-pear">
-            <option value="Pending" selected>Pending</option>
-            <option value="Yes">Yes</option>
-            <option value="No">No</option>
-          </select>
-        </div>
-
-        <div class="md:col-span-2 flex justify-end space-x-3 pt-4 border-t dark:border-waterloo">
-          <button type="button" onclick="closeModal()" class="py-2 px-4 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 dark:border-waterloo dark:text-pear">Cancel</button>
-          <button type="submit" class="py-2 px-4 bg-brand hover:bg-brandlight text-blackpearl font-semibold rounded-md shadow-md">Save</button>
-        </div>
-      </form>
+        <p id="loadingText" class="mt-4 text-brand-accent text-lg font-semibold">Loading...</p>
     </div>
-  </div>
 
-  <!-- Loading -->
-  <div id="loadingModal" class="hidden fixed inset-0 bg-black bg-opacity-70 flex flex-col justify-center items-center z-50">
-    <div class="relative flex items-center justify-center">
-      <div class="w-16 h-16 border-4 border-brand border-t-transparent rounded-full animate-spin"></div>
-      <div class="absolute w-10 h-10 border-4 border-brandlight border-b-transparent rounded-full animate-spin-slow"></div>
-    </div>
-    <p id="loadingText" class="mt-4 text-brand text-lg font-semibold">Loading...</p>
-  </div>
+    <script>
+        feather.replace();
 
-  <!-- Custom animation -->
-  <style>
-    .animate-spin-slow {
-      animation: spin 2.5s linear infinite;
-    }
-    @keyframes spin {
-      0% { transform: rotate(0deg);}
-      100% { transform: rotate(360deg);}
-    }
-  </style>
+        const toggleBtn = document.getElementById('themeToggle');
+        const body = document.body;
+        const form = document.getElementById("coachingForm");
+        const modalBg = document.getElementById('modalBg');
+        const modalContent = document.getElementById('modalContent');
+        const deleteModal = document.getElementById('deleteConfirmModal'); // New
+        const deleteModalContent = document.getElementById('deleteModalContent'); // New
+        const confirmDeleteButton = document.getElementById('confirmDeleteButton'); // New
+        const API_URL = "https://script.google.com/macros/s/AKfycbyn9CG1Lk3S5bXtfEEbvH5H-8GfBBOvY4OGSJPyIM5RZSDBCOf4fwkXVvnKjzZGvqUL/exec";
+        let sessionIdToDelete = null; // New state variable
 
-  <!-- Keep JS logic -->
-  <script>
-    feather.replace();
-    const toggleBtn = document.getElementById('themeToggle');
-    toggleBtn.addEventListener('click', () => {
-      document.body.classList.toggle('dark');
-      toggleBtn.innerHTML = document.body.classList.contains('dark')
-        ? feather.icons.sun.toSvg()
-        : feather.icons.moon.toSvg();
-    });
+        /* ------------------ THEME TOGGLE FIX (No Change) ------------------ */
 
-    const API_URL = "https://script.google.com/macros/s/AKfycbyn9CG1Lk3S5bXtfEEbvH5H-8GfBBOvY4OGSJPyIM5RZSDBCOf4fwkXVvnKjzZGvqUL/exec";
-
-    function showLoading(message = "Loading...") {
-      document.getElementById('loadingText').innerText = message;
-      document.getElementById('loadingModal').classList.remove('hidden');
-    }
-    function hideLoading() { document.getElementById('loadingModal').classList.add('hidden'); }
-
-    const form = document.getElementById("coachingForm");
-
-    function openModal(editing = false) {
-      document.getElementById('modalBg').classList.remove('hidden');
-      document.getElementById("modalTitle").innerText = editing ? "Edit Coaching Session" : "Add Coaching Session";
-    }
-    function closeModal() {
-      document.getElementById('modalBg').classList.add('hidden');
-      form.reset();
-      delete form.dataset.editId;
-      [...form.elements].forEach(el => el.disabled = false);
-      form.querySelector('button[type="submit"]').classList.remove('hidden');
-    }
-
-    async function loadSessions() {
-      showLoading("Fetching coaching sessions...");
-      const res = await fetch(API_URL);
-      const sessions = await res.json();
-      const table = document.getElementById("sessionsTable");
-      table.innerHTML = "";
-      sessions.forEach(session => {
-        table.innerHTML += `
-          <tr class="hover:bg-gray-50 dark:hover:bg-gray-800 transition duration-150">
-            <td class="px-4 py-3">${session.date || session.Date}</td>
-            <td class="px-4 py-3">${session.coach || session.Coach}</td>
-            <td class="px-4 py-3">${session.employee || session.Employee}</td>
-            <td class="px-4 py-3">${session.performance || session.Performance}</td>
-            <td class="px-4 py-3">${session.acknowledge || "Pending"}</td>
-            <td class="px-4 py-3 text-center space-x-2">
-              <button class="text-green-600 hover:underline text-sm" onclick='viewSession(${JSON.stringify(session)})'>View</button>
-              <button class="text-blue-600 hover:underline text-sm" onclick='editSession(${JSON.stringify(session)})'>Edit</button>
-              <button class="text-red-600 hover:underline text-sm" onclick='deleteSession(${session.ID || session.id})'>Delete</button>
-            </td>
-          </tr>
-        `;
-      });
-      hideLoading();
-    }
-
-    function viewSession(session) {
-      openModal(false);
-      Object.keys(session).forEach(key => {
-        if (form[key]) {
-          form[key].value = session[key];
-          form[key].disabled = true;
+        function setTheme(isDark) {
+            if (isDark) {
+                body.classList.add("dark");
+                localStorage.setItem("theme", "dark");
+                toggleBtn.innerHTML = feather.icons.sun.toSvg();
+            } else {
+                body.classList.remove("dark");
+                localStorage.setItem("theme", "light");
+                toggleBtn.innerHTML = feather.icons.moon.toSvg();
+            }
         }
-      });
-      form.querySelector('button[type="submit"]').classList.add('hidden');
-    }
 
-    function editSession(session) {
-      openModal(true);
-      Object.keys(session).forEach(key => {
-        if (form[key]) form[key].value = session[key];
-      });
-      form.dataset.editId = session.ID || session.id;
-    }
+        if (localStorage.getItem("theme") === "dark" || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            setTheme(true);
+        } else {
+            setTheme(false);
+        }
 
-    async function deleteSession(id) {
-      if (!confirm("Delete this session?")) return;
-      showLoading("Deleting session...");
-      await fetch(API_URL, {
-        method: "POST",
-        body: JSON.stringify({ _method: "DELETE", id })
-      });
-      await loadSessions();
-      hideLoading();
-    }
-
-    form.addEventListener("submit", async function (e) {
-      e.preventDefault();
-      showLoading(this.dataset.editId ? "Updating session..." : "Saving session...");
-      const formData = Object.fromEntries(new FormData(this).entries());
-
-      if (this.dataset.editId) {
-        await fetch(API_URL, {
-          method: "POST",
-          body: JSON.stringify({ _method: "PUT", id: this.dataset.editId, ...formData })
+        toggleBtn.addEventListener('click', () => {
+            const isDark = body.classList.contains('dark');
+            setTheme(!isDark);
         });
-        delete this.dataset.editId;
-      } else {
-        await fetch(API_URL, {
-          method: "POST",
-          body: JSON.stringify(formData)
+
+        /* ------------------ LOADING (No Change) ------------------ */
+        function showLoading(message = "Loading...") {
+            document.getElementById('loadingText').innerText = message;
+            document.getElementById('loadingModal').classList.remove('hidden');
+        }
+        function hideLoading() {
+            document.getElementById('loadingModal').classList.add('hidden');
+        }
+
+        /* ------------------ MODAL FIX (No Change) ------------------ */
+        function openModal(editing = false) {
+            modalBg.classList.remove('hidden');
+            setTimeout(() => {
+                modalBg.classList.add('opacity-100');
+                modalContent.classList.remove('opacity-0', 'scale-95');
+            }, 10);
+
+            document.getElementById("modalTitle").innerText = editing
+                ? "Edit Coaching Session"
+                : "Add Coaching Session";
+        }
+
+        function closeModal() {
+            modalBg.classList.remove('opacity-100');
+            modalContent.classList.add('opacity-0', 'scale-95');
+            setTimeout(() => {
+                modalBg.classList.add('hidden');
+                form.reset();
+                delete form.dataset.editId;
+                [...form.elements].forEach(el => el.disabled = false);
+                form.querySelector('button[type="submit"]').classList.remove('hidden');
+            }, 300);
+        }
+
+        /* ------------------ DELETE MODAL FUNCTIONS (NEW) ------------------ */
+        function openDeleteModal(id) {
+            sessionIdToDelete = id; // Store the ID
+            deleteModal.classList.remove('hidden');
+            setTimeout(() => {
+                deleteModal.classList.add('opacity-100');
+                deleteModalContent.classList.remove('opacity-0', 'scale-95');
+            }, 10);
+        }
+
+        function closeDeleteModal() {
+            deleteModal.classList.remove('opacity-100');
+            deleteModalContent.classList.add('opacity-0', 'scale-95');
+            setTimeout(() => {
+                deleteModal.classList.add('hidden');
+                sessionIdToDelete = null; // Clear the stored ID
+            }, 300);
+        }
+        
+        // Listener for the custom confirm button
+        confirmDeleteButton.addEventListener('click', () => {
+            if (sessionIdToDelete !== null) {
+                // Execute the deletion and then close the modal
+                executeDeleteSession(sessionIdToDelete); 
+            }
+            closeDeleteModal();
         });
-      }
 
-      hideLoading();
-      closeModal();
-      loadSessions();
-    });
 
-    window.onload = loadSessions;
-  </script>
+        /* ------------------ LOAD SESSIONS (No Change) ------------------ */
+        async function loadSessions() {
+            showLoading("Fetching coaching sessions...");
+            try {
+                const res = await fetch(API_URL);
+                if (!res.ok) throw new Error('Network response was not ok');
+                const sessions = await res.json();
+                const table = document.getElementById("sessionsTable");
+                table.innerHTML = "";
+
+                if (sessions.length === 0) {
+                    table.innerHTML = `
+                        <tr class="text-center">
+                            <td colspan="6" class="p-8 text-gray-500 dark:text-gray-400">
+                                No coaching sessions found. Click 'New Session' to add one.
+                            </td>
+                        </tr>
+                    `;
+                } else {
+                    sessions.forEach(session => {
+                        const acknowledgeStatus = session.acknowledge || "Pending";
+                        let statusClass = "bg-gray-200 text-gray-700";
+                        if (acknowledgeStatus === "Yes") {
+                            statusClass = "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300";
+                        } else if (acknowledgeStatus === "No") {
+                            statusClass = "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300";
+                        }
+                        
+                        // NOTE: Updated delete button to call openDeleteModal
+                        table.innerHTML += `
+                            <tr class="text-gray-700 dark:text-gray-300 border-b dark:border-border-dark hover:bg-gray-50 dark:hover:bg-gray-800/50 transition duration-150">
+                                <td class="px-6 py-4 whitespace-nowrap">${session.date || session.Date || 'N/A'}</td>
+                                <td class="px-6 py-4">${session.coach || session.Coach || 'N/A'}</td>
+                                <td class="px-6 py-4 font-medium">${session.employee || session.Employee || 'N/A'}</td>
+                                <td class="px-6 py-4 max-w-xs truncate">${session.performance || session.Performance || 'N/A'}</td>
+                                <td class="px-6 py-4">
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${statusClass}">
+                                        ${acknowledgeStatus}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 text-center space-x-2 whitespace-nowrap">
+                                    <button class="text-blue-500 hover:text-brand-accent transition text-sm font-semibold" onclick='viewSession(${JSON.stringify(session)})'>View</button>
+                                    <button class="text-green-500 hover:text-brand-accent transition text-sm font-semibold" onclick='editSession(${JSON.stringify(session)})'>Edit</button>
+                                    <button class="text-red-500 hover:text-brand-accent transition text-sm font-semibold" onclick='openDeleteModal(${session.ID || session.id})'>Delete</button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                }
+
+            } catch (error) {
+                console.error("Failed to load sessions:", error);
+                const table = document.getElementById("sessionsTable");
+                table.innerHTML = `
+                    <tr class="text-center">
+                        <td colspan="6" class="p-8 text-red-500 dark:text-red-400">
+                            Failed to load data. Check the API URL.
+                        </td>
+                    </tr>
+                `;
+            } finally {
+                hideLoading();
+            }
+        }
+
+        /* ------------------ VIEW/EDIT SESSION (No Change) ------------------ */
+        function viewSession(session) {
+            openModal(false);
+            Object.keys(session).forEach(key => {
+                const el = form.elements.namedItem(key); 
+                if (el) {
+                    el.value = session[key];
+                    el.disabled = true;
+                }
+            });
+            form.querySelector('button[type="submit"]').classList.add('hidden');
+        }
+
+        function editSession(session) {
+            openModal(true);
+            Object.keys(session).forEach(key => {
+                const el = form.elements.namedItem(key); 
+                if (el) el.value = session[key];
+            });
+            form.dataset.editId = session.ID || session.id;
+        }
+
+        /* ------------------ DELETE SESSION (Updated to use custom modal) ------------------ */
+        function deleteSession(id) {
+            openDeleteModal(id);
+        }
+
+        async function executeDeleteSession(id) {
+            showLoading("Deleting session...");
+            try {
+                const res = await fetch(API_URL, {
+                    method: "POST",
+                    body: JSON.stringify({ _method: "DELETE", id })
+                });
+                if (!res.ok) throw new Error('Delete failed');
+            } catch (error) {
+                console.error("Error deleting session:", error);
+                alert("Failed to delete session. Check the console for details.");
+            }
+            await loadSessions();
+        }
+
+        /* ------------------ SAVE / UPDATE SESSION (No Change) ------------------ */
+        form.addEventListener("submit", async function (e) {
+            e.preventDefault();
+            showLoading(this.dataset.editId ? "Updating session..." : "Saving session...");
+            const formData = Object.fromEntries(new FormData(this).entries());
+
+            try {
+                if (this.dataset.editId) {
+                    const res = await fetch(API_URL, {
+                        method: "POST",
+                        body: JSON.stringify({ _method: "PUT", id: this.dataset.editId, ...formData })
+                    });
+                    if (!res.ok) throw new Error('Update failed');
+                } else {
+                    const res = await fetch(API_URL, {
+                        method: "POST",
+                        body: JSON.stringify(formData)
+                    });
+                    if (!res.ok) throw new Error('Save failed');
+                }
+                closeModal();
+                loadSessions();
+            } catch (error) {
+                console.error("Error saving session:", error);
+                hideLoading();
+                alert(`Failed to save session: ${error.message}. Check the console for details.`);
+            }
+        });
+
+        /* ------------------ INIT ------------------ */
+        window.onload = loadSessions;
+    </script>
+
 </body>
+
 </html>
