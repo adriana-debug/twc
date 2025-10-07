@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>KPI Dashboard</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+    <script src="https://unpkg.com/feather-icons"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            // Enable dark mode based on the 'dark' class
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    // Set Roboto as the primary font
+                    fontFamily: {
+                        sans: ['Roboto', 'sans-serif'],
+                    },
+                    colors: {
+                        // Google-inspired palette
+                        'google-blue': '#4285F4',
+                        'google-green': '#34A853',
+                        'google-red': '#EA4335',
+                        'google-yellow': '#FBBC05',
+                        // Primary brand accents (used for buttons, highlights)
+                        'brand-accent': '#CBEB33',
+                        'brand-dark': '#B5D12F',
+                        // Dark Mode Palette
+                        'bg-dark': '#0f172a', // Main dark background
+                        'text-dark': '#f1f5f9', // Light text on dark backgrounds
+                        'card-dark': '#1e293b', // Card/Header dark background
+                        'border-dark': '#334155', // Dark border/secondary background
+                        // Light Mode Palette
+                        'bg-light': '#f8fafc', // Standard light background
+                        'text-light': '#1e293b', // Standard dark text
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom styles for the Side Drawer */
+        .drawer {
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transform: translateX(-100%);
+        }
+        .drawer-open {
+            transform: translateX(0);
+        }
+
+        /* Nav Item Styles */
+        .nav-item:hover {
+            background-color: theme('colors.gray.100');
+            border-radius: 9999px;
+        }
+
+        /* Style for the main KPI cards */
+        .kpi-card {
+            transition: box-shadow 0.3s ease;
+        }
+        .kpi-card:hover {
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Loading animation utility */
+        .animate-spin-slow {
+            animation: spin 2.5s linear infinite;
+        }
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Utility to hide scrollbar (used on IR/NTE log table) */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none; /* IE and Edge */
+            scrollbar-width: none; /* Firefox */
+        }
+    </style>
+</head>
+
+<body class="min-h-screen bg-gray-100 text-gray-800 font-sans transition-colors duration-500 dark:bg-bg-dark">
+
+    <aside id="drawer"
+        class="drawer fixed top-0 left-0 h-full w-64 bg-white shadow-2xl z-50 dark:bg-card-dark dark:text-text-dark">
+        <div
+            class="flex items-center justify-between p-4 pt-5 border-b sticky top-0 bg-white dark:bg-card-dark dark:border-border-dark z-10">
+            <img src="dmi_logo.png" alt="Digital Minds BPO Logo" class="h-10 object-contain" />
+
+            <button id="closeDrawer"
+                class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-text-dark p-2 rounded-full hover:bg-gray-100 dark:hover:bg-border-dark transition-all duration-300">
+                <span class="material-symbols-outlined text-2xl">close</span>
+            </button>
+        </div>
+
+        <nav class="p-3 text-sm font-normal text-gray-700 dark:text-gray-300">
+            <ul class="space-y-1">
+                <li>
+                    <button
+                        class="nav-item group flex items-center gap-3 p-3 w-full text-left rounded-md transition-all duration-300 ease-out transform-gpu hover:scale-[1.02]
+                            hover:bg-[#e3f37b] hover:text-black dark:hover:bg-border-dark dark:hover:text-[#CBEB33]"
+                        data-tab-title="Summary" onclick="showTab('summary', event)">
+                        <span class="material-symbols-outlined text-xl transition-colors duration-300">dashboard</span>
+                        <span class="transition-colors duration-300">Dashboard</span>
+                    </button>
+                </li>
+                <li>
+                    <button
+                        class="nav-item group flex items-center gap-3 p-3 w-full text-left rounded-md transition-all duration-300 ease-out transform-gpu hover:scale-[1.02]
+                            hover:bg-[#e3f37b] hover:text-black dark:hover:bg-border-dark dark:hover:text-[#CBEB33]"
+                        data-tab-title="KPI Dashboard" onclick="showTab('kpi-dashboard', event)">
+                        <span class="material-symbols-outlined text-xl">insights</span>
+                        <span>KPI</span>
+                    </button>
+                </li>
+                <li>
+                    <button
+                        class="nav-item group flex items-center gap-3 p-3 w-full text-left rounded-md transition-all duration-300 ease-out transform-gpu hover:scale-[1.02]
+                            hover:bg-[#e3f37b] hover:text-black dark:hover:bg-border-dark dark:hover:text-[#CBEB33]"
+                        data-tab-title="Coaching Sessions" onclick="showTab('coaching-log', event)">
+                        <span class="material-symbols-outlined text-xl">person_pin_circle</span>
+                        <span>Coaching Log</span>
+                    </button>
+                </li>
+                <li>
+                    <button
+                        class="nav-item group flex items-center gap-3 p-3 w-full text-left rounded-md transition-all duration-300 ease-out transform-gpu hover:scale-[1.02]
+                            hover:bg-[#e3f37b] hover:text-black dark:hover:bg-border-dark dark:hover:text-[#CBEB33]"
+                        data-tab-title="IR / NTE Log" onclick="showTab('ir-nte-log', event)">
+                        <span class="material-symbols-outlined text-xl">gavel</span>
+                        <span>IR / NTE Log</span>
+                    </button>
+                </li>
+                <li>
+                    <button
+                        class="nav-item group flex items-center gap-3 p-3 w-full text-left rounded-md transition-all duration-300 ease-out transform-gpu hover:scale-[1.02]
+                            hover:bg-[#e3f37b] hover:text-black dark:hover:bg-border-dark dark:hover:text-[#CBEB33]"
+                        data-tab-title="Team Alpha Dashboard" onclick="showTab('alpha', event)">
+                        <span class="material-symbols-outlined text-xl">group</span>
+                        <span>Team Alpha</span>
+                    </button>
+                </li>
+                <li>
+                    <button
+                        class="nav-item group flex items-center gap-3 p-3 w-full text-left rounded-md transition-all duration-300 ease-out transform-gpu hover:scale-[1.02]
+                            hover:bg-[#e3f37b] hover:text-black dark:hover:bg-border-dark dark:hover:text-[#CBEB33]"
+                        data-tab-title="Team Bravo Dashboard" onclick="showTab('bravo', event)">
+                        <span class="material-symbols-outlined text-xl">group</span>
+                        <span>Team Bravo</span>
+                    </button>
+                </li>
+                <li>
+                    <button
+                        class="nav-item flex items-center gap-3 p-3 w-full text-left rounded-md transition-all duration-300 ease-out transform-gpu hover:scale-[1.02]
+                            hover:text-google-green dark:hover:bg-border-dark"
+                        data-tab-title="Top Performers Report" onclick="showTab('gainers', event)">
+                        <span class="material-symbols-outlined text-xl text-google-green">trending_up</span>
+                        <span>Performers</span>
+                    </button>
+                </li>
+                <li>
+                    <button
+                        class="nav-item flex items-center gap-3 p-3 w-full text-left rounded-md transition-all duration-300 ease-out transform-gpu hover:scale-[1.02]
+                            hover:text-google-red dark:hover:bg-border-dark"
+                        data-tab-title="Underperformers Report" onclick="showTab('losers', event)">
+                        <span class="material-symbols-outlined text-xl text-google-red">trending_down</span>
+                        <span>Underperformers</span>
+                    </button>
+                </li>
+                <li>
+                    <button
+                        class="nav-item group flex items-center gap-3 p-3 w-full text-left rounded-md transition-all duration-300 ease-out transform-gpu hover:scale-[1.02]
+                            hover:bg-[#e3f37b] hover:text-black dark:hover:bg-border-dark dark:hover:text-[#CBEB33]"
+                        data-tab-title="SOP Documents" onclick="showTab('sop', event)">
+                        <span class="material-symbols-outlined text-xl transition-colors duration-300">description</span>
+                        <span class="transition-colors duration-300">SOP</span>
+                    </button>
+                </li>
+                <li>
+                    <button
+                        class="nav-item group flex items-center gap-3 p-3 w-full text-left rounded-md transition-all duration-300 ease-out transform-gpu hover:scale-[1.02]
+                            hover:bg-[#e3f37b] hover:text-black dark:hover:bg-border-dark dark:hover:text-[#CBEB33]"
+                        data-tab-title="Campaign Tools" onclick="showTab('tools', event)">
+                        <span class="material-symbols-outlined text-xl transition-colors duration-300">build</span>
+                        <span class="transition-colors duration-300">Tools</span>
+                    </button>
+                </li>
+            </ul>
+        </nav>
+    </aside>
+
+    <div id="overlay" class="fixed inset-0 bg-black bg-opacity-30 hidden z-40 transition-opacity duration-300"></div>
+
+    <div id="page-content">
+        <header
+            class="flex items-center gap-4 bg-white dark:bg-card-dark p-4 shadow-md sticky top-0 z-30 transition-colors duration-500 border-b border-gray-100 dark:border-border-dark">
+            <button id="menuBtn"
+                class="text-gray-600 dark:text-gray-300 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-border-dark transition">
+                <span class="material-symbols-outlined text-2xl">menu</span>
+            </button>
+            <h1 id="mainTitleContainer" class="text-2xl font-extrabold text-gray-900 dark:text-text-dark"></h1>
+            <button id="themeToggle"
+                class="ml-auto p-2 rounded-full text-gray-800 dark:text-text-dark bg-gray-100 dark:bg-border-dark hover:bg-brand-accent hover:text-bg-dark transition-all duration-300 transform hover:scale-105"
+                aria-label="Toggle Dark Mode">
+                </button>
+        </header>
+
+        <main class="max-w-7xl mx-auto p-6 lg:p-10 space-y-12">
+
+            <div id="summary" class="tab-content">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div
+                        class="kpi-card bg-white dark:bg-card-dark shadow-lg rounded-xl p-6 flex flex-col border-t-4 border-google-blue dark:border-blue-700">
+                        <span class="material-symbols-outlined text-4xl text-google-blue mb-3">groups</span>
+                        <p class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Total
+                            Headcount</p>
+                        <p class="text-3xl font-bold mt-1 text-gray-900 dark:text-text-dark">292</p>
+                    </div>
+                    <div
+                        class="kpi-card bg-white dark:bg-card-dark shadow-lg rounded-xl p-6 flex flex-col border-t-4 border-google-green dark:border-green-700">
+                        <span class="material-symbols-outlined text-4xl text-google-green mb-3">person_check</span>
+                        <p class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Active
+                            Agents</p>
+                        <p class="text-3xl font-bold mt-1 text-gray-900 dark:text-text-dark">278</p>
+                    </div>
+                    <div
+                        class="kpi-card bg-white dark:bg-card-dark shadow-lg rounded-xl p-6 flex flex-col border-t-4 border-google-red dark:border-red-700">
+                        <span class="material-symbols-outlined text-4xl text-google-red mb-3">schedule</span>
+                        <p class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Lost
+                            Hours</p>
+                        <p class="text-3xl font-bold mt-1 text-gray-900 dark:text-text-dark">124</p>
+                    </div>
+                    <div
+                        class="kpi-card bg-white dark:bg-card-dark shadow-lg rounded-xl p-6 flex flex-col border-t-4 border-google-yellow dark:border-yellow-700">
+                        <span class="material-symbols-outlined text-4xl text-google-yellow mb-3">work_history</span>
+                        <p class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Billed
+                            Hours</p>
+                        <p class="text-3xl font-bold mt-1 text-gray-900 dark:text-text-dark">1,680</p>
+                    </div>
+                </div>
+
+                <div
+                    class="mt-12 bg-white dark:bg-card-dark shadow-lg rounded-xl overflow-hidden transition-colors duration-500">
+                    <h3
+                        class="text-xl font-semibold p-6 border-b text-gray-700 dark:text-gray-300 dark:border-border-dark">
+                        Campaign Performance Snapshot</h3>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full text-sm text-left">
+                            <thead
+                                class="bg-gray-50 dark:bg-border-dark text-gray-600 dark:text-text-dark uppercase text-xs border-b dark:border-border-dark">
+                                <tr>
+                                    <th class="px-6 py-3 font-medium">Campaign</th>
+                                    <th class="px-6 py-3 font-medium">LOB</th>
+                                    <th class="px-6 py-3 font-medium">Headcount</th>
+                                    <th class="px-6 py-3 font-medium">CSAT %</th>
+                                    <th class="px-6 py-3 font-medium">AHT (s)</th>
+                                    <th class="px-6 py-3 font-medium">Conversion Rate</th>
+                                    <th class="px-6 py-3 font-medium">Open Rate</th>
+                                    <th class="px-6 py-3 font-medium">FCR</th>
+                                    <th class="px-6 py-3 font-medium">Utilization %</th>
+                                    <th class="px-6 py-3 font-medium">SLA %</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200 dark:divide-border-dark">
+                                <tr
+                                    class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition duration-150 ease-in-out text-gray-700 dark:text-gray-300">
+                                    <td class="px-6 py-4 font-semibold text-gray-800 dark:text-text-dark">Alpha</td>
+                                    <td class="px-6 py-4">Sales</td>
+                                    <td class="px-6 py-4">35</td>
+                                    <td class="px-6 py-4 text-google-green">89%</td>
+                                    <td class="px-6 py-4">540</td>
+                                    <td class="px-6 py-4 text-google-green font-semibold flex items-center gap-1">15.2%
+                                        <span class="material-symbols-outlined text-base">arrow_upward</span></td>
+                                    <td class="px-6 py-4 text-gray-400">N/A</td>
+                                    <td class="px-6 py-4 text-gray-400">N/A</td>
+                                    <td class="px-6 py-4">92%</td>
+                                    <td class="px-6 py-4 text-google-green">95%</td>
+                                </tr>
+                                <tr
+                                    class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition duration-150 ease-in-out text-gray-700 dark:text-gray-300">
+                                    <td class="px-6 py-4 font-semibold text-gray-800 dark:text-text-dark">Beta</td>
+                                    <td class="px-6 py-4">Sales</td>
+                                    <td class="px-6 py-4">20</td>
+                                    <td class="px-6 py-4 text-google-green">91%</td>
+                                    <td class="px-6 py-4">480</td>
+                                    <td class="px-6 py-4 text-google-green font-semibold flex items-center gap-1">18.5%
+                                        <span class="material-symbols-outlined text-base">arrow_upward</span></td>
+                                    <td class="px-6 py-4 text-gray-400">N/A</td>
+                                    <td class="px-6 py-4 text-gray-400">N/A</td>
+                                    <td class="px-6 py-4">90%</td>
+                                    <td class="px-6 py-4 text-google-green">98%</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="coaching-log" class="tab-content hidden">
+                <div
+                    class="flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0 mt-2">
+                    <div class="relative w-full md:w-1/3">
+                        <input type="text" id="searchInput" onkeyup="filterSessions()"
+                            placeholder="Search employee, coach, or focus area..."
+                            class="w-full p-3 pl-10 border border-gray-300 rounded-full focus:ring-2 focus:ring-brand-accent focus:border-brand-accent dark:bg-card-dark dark:border-border-dark dark:text-text-dark transition shadow-md">
+                        <span
+                            class="material-symbols-outlined absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-xl">search</span>
+                    </div>
+                    <button onclick="openModal()"
+                        class="inline-flex items-center bg-brand-accent hover:bg-brand-dark text-bg-dark px-6 py-3 rounded-full shadow-lg font-bold transition duration-300 transform hover:scale-[1.03] text-lg">
+                        <i class="fas fa-plus-circle mr-3"></i>New Session
+                    </button>
+                </div>
+
+                <div
+                    class="mt-6 bg-white dark:bg-card-dark rounded-2xl shadow-2xl shadow-gray-200/50 dark:shadow-xl dark:shadow-black/50 overflow-hidden transition-colors duration-500 border border-gray-100 dark:border-border-dark">
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full text-sm">
+                            <thead class="bg-gray-100 dark:bg-border-dark text-left">
+                                <tr>
+                                    <th
+                                        class="font-semibold text-gray-600 dark:text-text-dark uppercase tracking-wider px-6 py-4">
+                                        Date</th>
+                                    <th
+                                        class="font-semibold text-gray-600 dark:text-text-dark uppercase tracking-wider px-6 py-4">
+                                        Coach</th>
+                                    <th
+                                        class="font-semibold text-gray-600 dark:text-text-dark uppercase tracking-wider px-6 py-4">
+                                        Employee</th>
+                                    <th
+                                        class="font-semibold text-gray-600 dark:text-text-dark uppercase tracking-wider px-6 py-4">
+                                        Focus Area</th>
+                                    <th
+                                        class="font-semibold text-gray-600 dark:text-text-dark uppercase tracking-wider px-6 py-4">
+                                        Signed Form</th>
+                                    <th
+                                        class="font-semibold text-gray-600 dark:text-text-dark uppercase tracking-wider px-6 py-4">
+                                        Acknowledge</th>
+                                    <th
+                                        class="font-semibold text-gray-600 dark:text-text-dark uppercase tracking-wider text-center px-6 py-4">
+                                        Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="sessionsTable" class="divide-y divide-gray-200 dark:divide-border-dark">
+                                <tr class="text-center">
+                                    <td colspan="7" class="p-8 text-gray-500 dark:text-gray-400">
+                                        Loading data...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="ir-nte-log" class="tab-content hidden">
+                <div
+                    class="flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0 mt-2">
+                    <div class="relative w-full md:w-1/3">
+                        <input type="text" id="irnteSearch" placeholder="Search by Employee, Code, or Campaign..."
+                            class="w-full p-3 pl-10 border border-gray-300 rounded-full focus:ring-2 focus:ring-brand-accent focus:border-brand-accent dark:bg-card-dark dark:border-border-dark dark:text-text-dark transition shadow-md"
+                            onkeyup="handleIRSearch()">
+                        <span
+                            class="material-symbols-outlined absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-xl">search</span>
+                    </div>
+                    <button id="openCreateModal" onclick="openIRModal()"
+                        class="inline-flex items-center bg-brand-accent hover:bg-brand-dark text-bg-dark px-6 py-3 rounded-full shadow-lg font-bold transition duration-300 transform hover:scale-[1.03] text-lg">
+                        <i class="fas fa-plus-circle mr-3"></i>File New IR / NTE
+                    </button>
+                </div>
+
+                <div id="tableContainer"
+                    class="mt-6 bg-white dark:bg-card-dark rounded-2xl shadow-2xl shadow-gray-200/50 dark:shadow-xl dark:shadow-black/50 overflow-hidden transition-colors duration-500 border border-gray-100 dark:border-border-dark relative">
+
+                    <div id="irNteLoadingSpinner"
+                        class="absolute inset-0 bg-white/80 dark:bg-card-dark/80 backdrop-blur-sm flex justify-center items-center z-40 rounded-xl hidden">
+                        <div class="flex flex-col items-center">
+                            <div class="relative flex items-center justify-center">
+                                <div
+                                    class="w-16 h-16 border-4 border-gray-300 dark:border-border-dark border-t-brand-accent rounded-full animate-spin">
+                                </div>
+                                <div
+                                    class="absolute w-10 h-10 border-4 border-gray-200 dark:border-gray-700 border-b-brand-dark rounded-full animate-spin-slow">
+                                </div>
+                            </div>
+                            <p id="irNteLoadingText" class="mt-4 text-brand-accent text-lg font-semibold">Loading
+                                data...</p>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto no-scrollbar max-h-[70vh]">
+                        <table class="min-w-full text-sm">
+                            <thead
+                                class="bg-gray-100 dark:bg-border-dark text-left sticky top-0 z-10 text-gray-700 dark:text-text-dark">
+                                <tr>
+                                    <th class="font-semibold uppercase tracking-wider px-6 py-4">ID</th>
+                                    <th class="font-semibold uppercase tracking-wider px-6 py-4">Date Filed</th>
+                                    <th class="font-semibold uppercase tracking-wider px-6 py-4">Employee Name</th>
+                                    <th class="font-semibold uppercase tracking-wider px-6 py-4">NTE/IR Code</th>
+                                    <th class="font-semibold uppercase tracking-wider px-6 py-4">Category</th>
+                                    <th class="font-semibold uppercase tracking-wider px-6 py-4">Decision (HR)</th>
+                                    <th class="font-semibold uppercase tracking-wider text-center px-6 py-4">NTE Docs
+                                    </th>
+                                    <th class="font-semibold uppercase tracking-wider text-center px-6 py-4">NOD Docs
+                                    </th>
+                                    <th class="font-semibold uppercase tracking-wider text-center px-6 py-4">Actions
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody id="irnteSessionsTable" class="divide-y divide-gray-200 dark:divide-border-dark">
+                                <tr>
+                                    <td colspan="9" class="text-center py-6 text-gray-500 dark:text-gray-400">Loading
+                                        IR/NTE data...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="sop" class="tab-content hidden">
+                <h2 class="text-3xl font-extrabold text-gray-900 dark:text-text-dark mb-6">Standard Operating Procedures</h2>
+                <div
+                    class="flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0 mt-2">
+                    <div class="relative w-full md:w-1/3">
+                        <input type="text" id="sopSearch" onkeyup="handleSOPSearch()"
+                            placeholder="Search by Document Name, Campaign, or Description..."
+                            class="w-full p-3 pl-10 border border-gray-300 rounded-full focus:ring-2 focus:ring-brand-accent focus:border-brand-accent dark:bg-card-dark dark:border-border-dark dark:text-text-dark transition shadow-md">
+                        <span
+                            class="material-symbols-outlined absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-xl">search</span>
+                    </div>
+                    <a href="#" target="_blank"
+                        class="inline-flex items-center bg-brand-accent hover:bg-brand-dark text-bg-dark px-6 py-3 rounded-full shadow-lg font-bold transition duration-300 transform hover:scale-[1.03] text-lg">
+                        <i class="fas fa-plus-circle mr-3"></i>New SOP Entry
+                    </a>
+                </div>
+
+                <div
+                    class="mt-6 bg-white dark:bg-card-dark rounded-2xl shadow-2xl shadow-gray-200/50 dark:shadow-xl dark:shadow-black/50 overflow-hidden transition-colors duration-500 border border-gray-100 dark:border-border-dark relative">
+
+                    <div id="sopLoadingSpinner"
+                        class="hidden absolute inset-0 bg-white/80 dark:bg-card-dark/80 backdrop-blur-sm flex justify-center items-center z-40 rounded-xl">
+                        <div class="flex flex-col items-center">
+                            <div class="relative flex items-center justify-center">
+                                <div
+                                    class="w-16 h-16 border-4 border-gray-300 dark:border-border-dark border-t-brand-accent rounded-full animate-spin">
+                                </div>
+                                <div
+                                    class="absolute w-10 h-10 border-4 border-gray-200 dark:border-gray-700 border-b-brand-dark rounded-full animate-spin-slow">
+                                </div>
+                            </div>
+                            <p id="sopLoadingText" class="mt-4 text-brand-accent text-lg font-semibold">Loading SOP
+                                data...</p>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full text-sm">
+                            <thead
+                                class="bg-gray-100 dark:bg-border-dark text-left sticky top-0 z-10 text-gray-700 dark:text-text-dark">
+                                <tr>
+                                    <th class="font-semibold uppercase tracking-wider px-6 py-4">ID</th>
+                                    <th class="font-semibold uppercase tracking-wider px-6 py-4">Document Name</th>
+                                    <th class="font-semibold uppercase tracking-wider px-6 py-4">Campaign</th>
+                                    <th class="font-semibold uppercase tracking-wider px-6 py-4">Description</th>
+                                    <th class="font-semibold uppercase tracking-wider text-center px-6 py-4">Link</th>
+                                </tr>
+                            </thead>
+                            <tbody id="sopTable" class="divide-y divide-gray-200 dark:divide-border-dark">
+                                <tr>
+                                    <td colspan="5" class="text-center py-6 text-gray-500 dark:text-gray-400">Loading SOP
+                                        data...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="tools" class="tab-content hidden">
+                <h2 class="text-3xl font-extrabold text-gray-900 dark:text-text-dark mb-6">Campaigns Tools & Resources</h2>
+                <div
+                    class="flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0 mt-2">
+                    <div class="relative w-full md:w-1/3">
+                        <input type="text" id="toolsSearch" onkeyup="handleToolsSearch()"
+                            placeholder="Search by Tool Name, Campaign, or Description..."
+                            class="w-full p-3 pl-10 border border-gray-300 rounded-full focus:ring-2 focus:ring-brand-accent focus:border-brand-accent dark:bg-card-dark dark:border-border-dark dark:text-text-dark transition shadow-md">
+                        <span
+                            class="material-symbols-outlined absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-xl">search</span>
+                    </div>
+                    <a href="#" target="_blank"
+                        class="inline-flex items-center bg-brand-accent hover:bg-brand-dark text-bg-dark px-6 py-3 rounded-full shadow-lg font-bold transition duration-300 transform hover:scale-[1.03] text-lg">
+                        <i class="fas fa-plus-circle mr-3"></i>New Tool Entry
+                    </a>
+                </div>
+
+                <div
+                    class="mt-6 bg-white dark:bg-card-dark rounded-2xl shadow-2xl shadow-gray-200/50 dark:shadow-xl dark:shadow-black/50 overflow-hidden transition-colors duration-500 border border-gray-100 dark:border-border-dark relative">
+
+                    <div id="toolsLoadingSpinner"
+                        class="hidden absolute inset-0 bg-white/80 dark:bg-card-dark/80 backdrop-blur-sm flex justify-center items-center z-40 rounded-xl">
+                        <div class="flex flex-col items-center">
+                            <div class="relative flex items-center justify-center">
+                                <div
+                                    class="w-16 h-16 border-4 border-gray-300 dark:border-border-dark border-t-brand-accent rounded-full animate-spin">
+                                </div>
+                                <div
+                                    class="absolute w-10 h-10 border-4 border-gray-200 dark:border-gray-700 border-b-brand-dark rounded-full animate-spin-slow">
+                                </div>
+                            </div>
+                            <p id="toolsLoadingText" class="mt-4 text-brand-accent text-lg font-semibold">Loading Tools
+                                data...</p>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full text-sm">
+                            <thead
+                                class="bg-gray-100 dark:bg-border-dark text-left sticky top-0 z-10 text-gray-700 dark:text-text-dark">
+                                <tr>
+                                    <th class="font-semibold uppercase tracking-wider px-6 py-4">ID</th>
+                                    <th class="font-semibold uppercase tracking-wider px-6 py-4">Tool Name</th>
+                                    <th class="font-semibold uppercase tracking-wider px-6 py-4">Campaign</th>
+                                    <th class="font-semibold uppercase tracking-wider px-6 py-4">Description</th>
+                                    <th class="font-semibold uppercase tracking-wider text-center px-6 py-4">URL</th>
+                                    <th class="font-semibold uppercase tracking-wider text-center px-6 py-4">Work
+                                        Instruction</th>
+                                </tr>
+                            </thead>
+                            <tbody id="toolsTable" class="divide-y divide-gray-200 dark:divide-border-dark">
+                                <tr>
+                                    <td colspan="6" class="text-center py-6 text-gray-500 dark:text-gray-400">Loading
+                                        Tools data...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="kpi-dashboard" class="tab-content hidden">
+                <h2 class="text-3xl font-extrabold text-gray-900 dark:text-text-dark mb-6">Key Performance Indicators</h2>
+                <div class="flex items-center justify-start space-x-3 mb-6 border-b dark:border-border-dark">
+                    <button id="mainTab"
+                        class="tab-btn px-4 py-2 text-sm font-semibold rounded-t-lg border-b-2 border-google-blue text-google-blue dark:text-blue-400">
+                        Main Metrics
+                    </button>
+                    <button id="lookerTab"
+                        class="tab-btn px-4 py-2 text-sm font-semibold text-gray-500 hover:text-google-blue dark:text-gray-400 dark:hover:text-blue-400">
+                        Looker Studio
+                    </button>
+                </div>
+                
+                <div id="mainContent">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <div class="kpi-card bg-white dark:bg-card-dark shadow-lg rounded-xl p-6 flex flex-col border-t-4 border-google-blue dark:border-blue-700">
+                            <span class="material-symbols-outlined text-4xl text-google-blue mb-3">groups</span>
+                            <p class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Total Headcount</p>
+                            <p class="text-3xl font-bold mt-1 text-gray-900 dark:text-text-dark">292</p>
+                        </div>
+                        <div class="kpi-card bg-white dark:bg-card-dark shadow-lg rounded-xl p-6 flex flex-col border-t-4 border-google-green dark:border-green-700">
+                            <span class="material-symbols-outlined text-4xl text-google-green mb-3">checklist</span>
+                            <p class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">No. of KPIs</p>
+                            <p class="text-3xl font-bold mt-1 text-gray-900 dark:text-text-dark">42</p>
+                        </div>
+                        <div class="kpi-card bg-white dark:bg-card-dark shadow-lg rounded-xl p-6 flex flex-col border-t-4 border-google-yellow dark:border-yellow-700">
+                            <span class="material-symbols-outlined text-4xl text-google-yellow mb-3">verified</span>
+                            <p class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Passed KPIs</p>
+                            <p class="text-3xl font-bold mt-1 text-gray-900 dark:text-text-dark">36</p>
+                        </div>
+                        <div class="kpi-card bg-white dark:bg-card-dark shadow-lg rounded-xl p-6 flex flex-col border-t-4 border-google-red dark:border-red-700">
+                            <span class="material-symbols-outlined text-4xl text-google-red mb-3">cancel</span>
+                            <p class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Failed KPIs</p>
+                            <p class="text-3xl font-bold mt-1 text-gray-900 dark:text-text-dark">6</p>
+                        </div>
+                    </div>
+                    <div class="mt-12 bg-white dark:bg-card-dark shadow-lg rounded-xl overflow-hidden transition-colors duration-500">
+                        <h3 class="text-xl font-semibold p-6 border-b text-gray-700 dark:text-gray-300 dark:border-border-dark"> 
+                            Detailed KPI Summary
+                        </h3>
+                        <div class="overflow-y-auto max-h-[600px] relative">
+                            <table class="min-w-full text-sm text-left">
+                                <thead class="sticky top-0 z-10 bg-gray-50 dark:bg-border-dark text-gray-600 dark:text-text-dark uppercase text-xs border-b dark:border-border-dark shadow-sm">
+                                    <tr>
+                                        <th class="px-6 py-3 font-medium">Campaign</th>
+                                        <th class="px-6 py-3 font-medium">Headcount</th>
+                                        <th class="px-6 py-3 font-medium">CSAT %</th>
+                                        <th class="px-6 py-3 font-medium">AHT (s)</th>
+                                        <th class="px-6 py-3 font-medium">Conversion Rate</th>
+                                        <th class="px-6 py-3 font-medium">TRANSFER</th>
+                                        <th class="px-6 py-3 font-medium">FCR</th>
+                                        <th class="px-6 py-3 font-medium">SLA %</th>
+                                        <th class="px-6 py-3 font-medium">Quality</th>
+                                        <th class="px-6 py-3 font-medium">ACCURACY</th>
+                                        <th class="px-6 py-3 font-medium">Error Rate</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-200 dark:divide-border-dark">
+                                    </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="lookerContent" class="hidden">
+                    <p class="text-gray-600 dark:text-gray-400">Looker Studio embedding will be handled by JavaScript or an iframe here.</p>
+                </div>
+            </div>
+
+            <div id="alpha" class="tab-content hidden">
+                <h2 class="text-3xl font-bold text-gray-900 dark:text-text-dark">Team Alpha Dashboard</h2>
+                <p class="mt-4 text-gray-600 dark:text-gray-400">Content for Team Alpha's specific metrics will be displayed here.</p>
+            </div>
+            <div id="bravo" class="tab-content hidden">
+                <h2 class="text-3xl font-bold text-gray-900 dark:text-text-dark">Team Bravo Dashboard</h2>
+                <p class="mt-4 text-gray-600 dark:text-gray-400">Content for Team Bravo's specific metrics will be displayed here.</p>
+            </div>
+            <div id="gainers" class="tab-content hidden">
+                <h2 class="text-3xl font-bold text-gray-900 dark:text-text-dark">Top Performers Report</h2>
+                <p class="mt-4 text-gray-600 dark:text-gray-400">Content for Top Performers will be displayed here.</p>
+            </div>
+            <div id="losers" class="tab-content hidden">
+                <h2 class="text-3xl font-bold text-gray-900 dark:text-text-dark">Underperformers Report</h2>
+                <p class="mt-4 text-gray-600 dark:text-gray-400">Content for Underperformers will be displayed here.</p>
+            </div>
+
+        </main>
+    </div>
+
+
+    <script>
+        // --- Configuration ---
+        const SOP_TOOLS_API_URL = 'https://script.google.com/macros/s/AKfycbwn0GPogd4Cy3TiEPR462FId4nP1DTy2r8Aciqxp389JS6lopKgV5j9u1My_g1YyE7t/exec'; // Replace with actual URL
+
+        let allSOPSessions = [];
+        let allToolsSessions = [];
+
+        // --- Drawer / Menu Functions ---
+
+        const drawer = document.getElementById('drawer');
+        const overlay = document.getElementById('overlay');
+        const menuBtn = document.getElementById('menuBtn');
+        const closeDrawer = document.getElementById('closeDrawer');
+
+        function toggleDrawer(open) {
+            if (open) {
+                drawer.classList.add('drawer-open');
+                overlay.classList.remove('hidden');
+            } else {
+                drawer.classList.remove('drawer-open');
+                overlay.classList.add('hidden');
+            }
+        }
+
+        menuBtn.addEventListener('click', () => toggleDrawer(true));
+        closeDrawer.addEventListener('click', () => toggleDrawer(false));
+        overlay.addEventListener('click', () => toggleDrawer(false));
+
+
+        // --- Tab Switching Functions ---
+
+        const tabContents = document.querySelectorAll('.tab-content');
+        const navItems = document.querySelectorAll('.nav-item');
+        const mainTitleContainer = document.getElementById('mainTitleContainer');
+
+        function showTab(tabId, event) {
+            // Hide all tab content
+            tabContents.forEach(content => content.classList.add('hidden'));
+
+            // Remove active style from all nav items
+            navItems.forEach(item => item.classList.remove('tab-active'));
+
+            // Show the selected tab content
+            const selectedTab = document.getElementById(tabId);
+            if (selectedTab) {
+                selectedTab.classList.remove('hidden');
+            }
+
+            // Set the active style on the clicked nav item
+            if (event) {
+                event.currentTarget.classList.add('tab-active');
+                // Update the main header title
+                const title = event.currentTarget.getAttribute('data-tab-title');
+                mainTitleContainer.textContent = title;
+            } else {
+                 // Handle initial load case (e.g., summary)
+                 const initialTabNav = document.querySelector(`.nav-item[data-tab-title='Summary']`);
+                 if (initialTabNav) {
+                    initialTabNav.classList.add('tab-active');
+                    mainTitleContainer.textContent = initialTabNav.getAttribute('data-tab-title');
+                 }
+            }
+
+
+            // Close drawer on mobile
+            toggleDrawer(false);
+
+            // Trigger data loading for dynamic tabs
+            if (tabId === 'sop' && allSOPSessions.length === 0) {
+                loadSOPRecords();
+            } else if (tabId === 'tools' && allToolsSessions.length === 0) {
+                loadToolRecords();
+            } else if (tabId === 'coaching-log' && typeof loadSessions === 'function') {
+                // Assuming 'loadSessions()' exists for coaching log
+                loadSessions(); 
+            } else if (tabId === 'ir-nte-log' && typeof loadIRSessions === 'function') {
+                 // Assuming 'loadIRSessions()' exists for IR/NTE log
+                loadIRSessions(); 
+            }
+        }
+
+        // --- Theme Toggle Functions (Minimal implementation for switch logic) ---
+
+        const themeToggle = document.getElementById('themeToggle');
+
+        function updateThemeIcon(isDark) {
+            themeToggle.innerHTML = `<span class="material-symbols-outlined text-2xl">${isDark ? 'light_mode' : 'dark_mode'}</span>`;
+        }
+
+        function toggleTheme() {
+            const isDark = document.documentElement.classList.toggle('dark');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            updateThemeIcon(isDark);
+        }
+
+        themeToggle.addEventListener('click', toggleTheme);
+
+        // Apply theme on load
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+            updateThemeIcon(true);
+        } else {
+            updateThemeIcon(false);
+        }
+
+        // --- SOP & Tools Specific Data Handling Functions ---
+
+        // Helper function to render a table row for SOP
+        function createSOPRow(sop) {
+            return `<tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition duration-150 ease-in-out text-gray-700 dark:text-gray-300">
+                        <td class="px-6 py-4">${sop.id}</td>
+                        <td class="px-6 py-4 font-semibold text-gray-800 dark:text-text-dark">${sop.documentName}</td>
+                        <td class="px-6 py-4">${sop.campaign}</td>
+                        <td class="px-6 py-4 max-w-xs truncate">${sop.description}</td>
+                        <td class="px-6 py-4 text-center">
+                            <a href="${sop.link}" target="_blank" class="text-google-blue hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition">
+                                <i class="fas fa-external-link-alt"></i>
+                            </a>
+                        </td>
+                    </tr>`;
+        }
+
+        // Helper function to render a table row for Tools
+        function createToolRow(tool) {
+            return `<tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition duration-150 ease-in-out text-gray-700 dark:text-gray-300">
+                        <td class="px-6 py-4">${tool.id}</td>
+                        <td class="px-6 py-4 font-semibold text-gray-800 dark:text-text-dark">${tool.toolName}</td>
+                        <td class="px-6 py-4">${tool.campaign}</td>
+                        <td class="px-6 py-4 max-w-xs truncate">${tool.description}</td>
+                        <td class="px-6 py-4 text-center">
+                            <a href="${tool.url}" target="_blank" class="text-google-blue hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition">
+                                <i class="fas fa-link"></i>
+                            </a>
+                        </td>
+                        <td class="px-6 py-4 text-center">
+                            ${tool.workInstructionLink ? `
+                                <a href="${tool.workInstructionLink}" target="_blank" class="text-google-green hover:text-green-700 dark:text-green-400 dark:hover:text-green-300 transition">
+                                    <i class="fas fa-file-alt"></i>
+                                </a>` : 'N/A'}
+                        </td>
+                    </tr>`;
+        }
+
+        // Function to render SOP table based on filtered data
+        function renderSOPTable(data) {
+            const table = document.getElementById('sopTable');
+            if (data.length === 0) {
+                table.innerHTML = `<tr><td colspan="5" class="text-center py-6 text-gray-500 dark:text-gray-400">No SOP documents found matching your search.</td></tr>`;
+                return;
+            }
+            table.innerHTML = data.map(createSOPRow).join('');
+        }
+
+        // Function to render Tools table based on filtered data
+        function renderToolsTable(data) {
+            const table = document.getElementById('toolsTable');
+            if (data.length === 0) {
+                table.innerHTML = `<tr><td colspan="6" class="text-center py-6 text-gray-500 dark:text-gray-400">No tools found matching your search.</td></tr>`;
+                return;
+            }
+            table.innerHTML = data.map(createToolRow).join('');
+        }
+
+        // Search logic for SOP
+        function handleSOPSearch() {
+            const query = document.getElementById('sopSearch').value.toLowerCase();
+            const filteredData = allSOPSessions.filter(sop =>
+                sop.documentName.toLowerCase().includes(query) ||
+                sop.campaign.toLowerCase().includes(query) ||
+                sop.description.toLowerCase().includes(query)
+            );
+            renderSOPTable(filteredData);
+        }
+
+        // Search logic for Tools
+        function handleToolsSearch() {
+            const query = document.getElementById('toolsSearch').value.toLowerCase();
+            const filteredData = allToolsSessions.filter(tool =>
+                tool.toolName.toLowerCase().includes(query) ||
+                tool.campaign.toLowerCase().includes(query) ||
+                tool.description.toLowerCase().includes(query)
+            );
+            renderToolsTable(filteredData);
+        }
+
+
+        // Function to fetch and load SOP records
+        async function loadSOPRecords() {
+            const table = document.getElementById('sopTable');
+            const spinner = document.getElementById('sopLoadingSpinner');
+
+            // Show loading state
+            table.innerHTML = `<tr><td colspan="5" class="text-center py-6 text-gray-500 dark:text-gray-400">Loading SOP data...</td></tr>`;
+            spinner.classList.remove('hidden');
+
+            try {
+                // Placeholder fetch: replace with your actual API endpoint
+                const fetchUrl = SOP_TOOLS_API_URL + '?action=getSOPs'; 
+                const res = await fetch(fetchUrl);
+
+                if (!res.ok) {
+                    throw new Error(`HTTP error! status: ${res.status}. Check SOP/Tools Apps Script URL.`);
+                }
+
+                // Simulate data structure (replace with actual API response processing)
+                allSOPSessions = [{
+                    id: 1,
+                    documentName: 'New Hire Onboarding SOP',
+                    campaign: 'Cross-Campaign',
+                    description: 'Step-by-step guide for new agent setup and initial training.',
+                    link: '#'
+                }, {
+                    id: 2,
+                    documentName: 'Sales Process Flow Q1',
+                    campaign: 'Alpha',
+                    description: 'Updated flow for handling sales leads in Q1 2024.',
+                    link: '#'
+                }, {
+                    id: 3,
+                    documentName: 'Escalation Matrix v3.1',
+                    campaign: 'Beta',
+                    description: 'The latest matrix for customer issue escalation paths.',
+                    link: '#'
+                }, ];
+
+                // If API integration is ready, use the actual response:
+                // allSOPSessions = await res.json(); 
+
+                if (allSOPSessions.error) {
+                    throw new Error(allSOPSessions.error);
+                }
+
+                renderSOPTable(allSOPSessions);
+
+            } catch (error) {
+                console.error("Error loading SOP records:", error);
+
+                const errorMessage = `Failed to load SOP data. (Error: ${error.message})`;
+
+                table.innerHTML = `<tr><td colspan="5" class="text-center py-6 text-google-red font-semibold">${errorMessage}</td></tr>`;
+            }
+            spinner.classList.add('hidden');
+        }
+
+        // Function to fetch and load Tools records
+        async function loadToolRecords() {
+            const table = document.getElementById('toolsTable');
+            const spinner = document.getElementById('toolsLoadingSpinner');
+
+            // Show loading state
+            table.innerHTML = `<tr><td colspan="6" class="text-center py-6 text-gray-500 dark:text-gray-400">Loading Tools data...</td></tr>`;
+            spinner.classList.remove('hidden');
+
+            try {
+                // Placeholder fetch: replace with your actual API endpoint
+                const fetchUrl = SOP_TOOLS_API_URL + '?action=getTools'; 
+                const res = await fetch(fetchUrl);
+
+                if (!res.ok) {
+                    throw new Error(`HTTP error! status: ${res.status}. Check SOP/Tools Apps Script URL.`);
+                }
+
+                // Simulate data structure (replace with actual API response processing)
+                allToolsSessions = [{
+                    id: 101,
+                    toolName: 'Sales Lead Tracker',
+                    campaign: 'Alpha',
+                    description: 'CRM tool for tracking lead progress and conversion.',
+                    url: '#',
+                    workInstructionLink: '#'
+                }, {
+                    id: 102,
+                    toolName: 'Time-Off Request Portal',
+                    campaign: 'Cross-Campaign',
+                    description: 'HR portal for filing and approving time-off requests.',
+                    url: '#',
+                    workInstructionLink: null
+                }, {
+                    id: 103,
+                    toolName: 'Quality Monitoring App',
+                    campaign: 'Beta',
+                    description: 'Application for coaches to score calls and agent performance.',
+                    url: '#',
+                    workInstructionLink: '#'
+                }, ];
+                
+                // If API integration is ready, use the actual response:
+                // allToolsSessions = await res.json();
+
+                if (allToolsSessions.error) {
+                    throw new Error(allToolsSessions.error);
+                }
+
+                renderToolsTable(allToolsSessions);
+
+            } catch (error) {
+                console.error("Error loading Tools records:", error);
+
+                const errorMessage = `Failed to load Tools data. (Error: ${error.message})`;
+
+                table.innerHTML = `<tr><td colspan="6" class="text-center py-6 text-google-red font-semibold">${errorMessage}</td></tr>`;
+            }
+            spinner.classList.add('hidden');
+        }
+
+
+        // Dummy functions required by the existing HTML structure 
+        // (You must define the actual implementation for these in a separate file or script tag)
+        function filterSessions() {
+            console.log('Coaching Log search activated. Implement filterSessions() logic.');
+        }
+
+        function openModal() {
+            console.log('Open Coaching Log Modal. Implement openModal() logic.');
+        }
+        
+        function openIRModal() {
+            console.log('Open IR/NTE Modal. Implement openIRModal() logic.');
+        }
+        
+        function handleIRSearch() {
+            console.log('IR/NTE search activated. Implement handleIRSearch() logic.');
+        }
+
+        // --- INIT ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // Show the initial tab ('summary') and set the initial header title
+            showTab('summary');
+        });
+    </script>
+</body>
+
+</html>
