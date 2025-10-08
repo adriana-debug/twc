@@ -628,38 +628,80 @@
 
 
 
-  <!-- === MAIN TAB === -->
-  <div id="mainContent">
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-2">
-      <div
-        class="bg-white dark:bg-card-dark border border-gray-100 dark:border-border-dark rounded-xl shadow-md p-6 text-left transition hover:shadow-lg">
-        <span class="material-symbols-outlined text-4xl text-google-blue mb-2">groups</span>
-        <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase">Total Headcount</h3>
-        <p class="text-3xl font-bold text-gray-900 dark:text-text-dark mt-1">74</p>
-      </div>
+<!-- === MAIN TAB === -->
+<div id="mainContent">
+  <!-- KPI CARDS -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-2">
+    <div
+      class="bg-white dark:bg-card-dark border border-gray-100 dark:border-border-dark rounded-xl shadow-md p-6 text-left transition hover:shadow-lg">
+      <span class="material-symbols-outlined text-4xl text-google-blue mb-2">groups</span>
+      <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase">Total Headcount</h3>
+      <p class="text-3xl font-bold text-gray-900 dark:text-text-dark mt-1">74</p>
+    </div>
 
-      <div
-        class="bg-white dark:bg-card-dark border border-gray-100 dark:border-border-dark rounded-xl shadow-md p-6 text-left transition hover:shadow-lg">
-        <span class="material-symbols-outlined text-4xl text-google-green mb-2">checklist</span>
-        <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase">No. of KPIs</h3>
-        <p class="text-3xl font-bold text-gray-900 dark:text-text-dark mt-1">42</p>
-      </div>
+    <div
+      class="bg-white dark:bg-card-dark border border-gray-100 dark:border-border-dark rounded-xl shadow-md p-6 text-left transition hover:shadow-lg">
+      <span class="material-symbols-outlined text-4xl text-google-green mb-2">checklist</span>
+      <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase">No. of KPIs</h3>
+      <p class="text-3xl font-bold text-gray-900 dark:text-text-dark mt-1">42</p>
+    </div>
 
-      <div
-        class="bg-white dark:bg-card-dark border border-gray-100 dark:border-border-dark rounded-xl shadow-md p-6 text-left transition hover:shadow-lg">
-        <span class="material-symbols-outlined text-4xl text-google-yellow mb-2">verified</span>
-        <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase">Passed KPIs</h3>
-        <p class="text-3xl font-bold text-google-green mt-1">36</p>
-      </div>
+    <div
+      class="bg-white dark:bg-card-dark border border-gray-100 dark:border-border-dark rounded-xl shadow-md p-6 text-left transition hover:shadow-lg">
+      <span class="material-symbols-outlined text-4xl text-google-yellow mb-2">verified</span>
+      <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase">Passed KPIs</h3>
+      <p class="text-3xl font-bold text-google-green mt-1">36</p>
+    </div>
 
-      <div
-        class="bg-white dark:bg-card-dark border border-gray-100 dark:border-border-dark rounded-xl shadow-md p-6 text-left transition hover:shadow-lg">
-        <span class="material-symbols-outlined text-4xl text-google-red mb-2">cancel</span>
-        <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase">Failed KPIs</h3>
-        <p class="text-3xl font-bold text-google-red mt-1">6</p>
-      </div>
+    <div
+      class="bg-white dark:bg-card-dark border border-gray-100 dark:border-border-dark rounded-xl shadow-md p-6 text-left transition hover:shadow-lg">
+      <span class="material-symbols-outlined text-4xl text-google-red mb-2">cancel</span>
+      <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase">Failed KPIs</h3>
+      <p class="text-3xl font-bold text-google-red mt-1">6</p>
     </div>
   </div>
+
+  <!-- === CAMPAIGN / REPORT / DRIVE TABLE === -->
+  <div class="mt-8 overflow-x-auto">
+    <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-3">Campaign Reports & Drive Links</h2>
+    <table class="min-w-full border border-gray-200 dark:border-border-dark rounded-lg overflow-hidden">
+      <thead class="bg-gray-100 dark:bg-border-dark">
+        <tr>
+          <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase">Campaign</th>
+          <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase">Report</th>
+          <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase">Google Drive Link</th>
+        </tr>
+      </thead>
+      <tbody class="bg-white dark:bg-card-dark divide-y divide-gray-200 dark:divide-border-dark">
+        <tr class="hover:bg-gray-50 dark:hover:bg-border-dark">
+          <td class="px-4 py-3 text-sm text-gray-800 dark:text-gray-200">Network Capital</td>
+          <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">August 2025</td>
+          <td class="px-4 py-3 text-sm">
+            <a href="https://drive.google.com/file/d/1ICbWEuMseUlRzLQm3jem9Q4_GF9zMx7A/view?usp=drive_link" target="_blank"
+               class="text-blue-600 dark:text-blue-400 hover:underline">Open Link</a>
+          </td>
+        </tr>
+        <tr class="hover:bg-gray-50 dark:hover:bg-border-dark">
+          <td class="px-4 py-3 text-sm text-gray-800 dark:text-gray-200">Network Capital</td>
+          <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">September 2025</td>
+          <td class="px-4 py-3 text-sm">
+            <a href="https://drive.google.com/file/d/1SAcDVWJvLI1YDDvk3mTuHnILXrZsxkXp/view?usp=drive_link" target="_blank"
+               class="text-blue-600 dark:text-blue-400 hover:underline">Open Link</a>
+          </td>
+        </tr>
+        <tr class="hover:bg-gray-50 dark:hover:bg-border-dark">
+          <td class="px-4 py-3 text-sm text-gray-800 dark:text-gray-200">Campaign Gamma</td>
+          <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">KPI Summary</td>
+          <td class="px-4 py-3 text-sm">
+            <a href="https://drive.google.com/example3" target="_blank"
+               class="text-blue-600 dark:text-blue-400 hover:underline">Open Link</a>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
 
 
 
